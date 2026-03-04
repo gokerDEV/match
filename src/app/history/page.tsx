@@ -1,7 +1,7 @@
 import { Download, Loader2, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { HeatmapRow } from "@/components/common/heatmap.row";
-import { Button } from "@/components/ui/button";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -13,7 +13,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import type {
 	RUN_ANALYSIS_MESSAGE,
 	RUN_ANALYSIS_RESPONSE,
@@ -105,10 +105,10 @@ export function HistoryPage() {
 					prev.map((h) =>
 						h.id === item.id
 							? {
-								...h,
-								scores: response.scores as number[],
-								timestamp: Date.now(),
-							}
+									...h,
+									scores: response.scores as number[],
+									timestamp: Date.now(),
+								}
 							: h,
 					),
 				);
@@ -188,7 +188,8 @@ export function HistoryPage() {
 							<AlertDialogHeader>
 								<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
 								<AlertDialogDescription>
-									This will permanently delete all your analysis history. This action cannot be undone.
+									This will permanently delete all your analysis history. This
+									action cannot be undone.
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>
@@ -218,7 +219,7 @@ export function HistoryPage() {
 						{history.map((item) => (
 							<div
 								key={item.id}
-								className="relative grid grid-cols-[1fr_2fr_auto] items-center rounded-md border bg-muted/30 pl-4 py-1.5 pr-2"
+								className="relative grid grid-cols-[1fr_2fr_auto] items-center rounded-md border bg-muted/30 py-1.5 pr-2 pl-4"
 							>
 								{/* Meta */}
 								<div className="flex max-w-[360px] flex-col gap-1 truncate px-2">
@@ -243,14 +244,14 @@ export function HistoryPage() {
 								</div>
 
 								{/* Actions */}
-								<div className="absolute -right-6 top-4 flex items-center flex-col gap-1 pr-1">
+								<div className="absolute top-4 -right-6 flex flex-col items-center gap-1 pr-1">
 									<Button
 										variant="ghost"
 										size="icon"
 										title="Force re-run analysis (bypasses cache)"
 										disabled={rerunning === item.id || deleting === item.id}
 										onClick={() => handleForceRerun(item)}
-										className="h-5 w-5 text-muted-foreground hover:text-foreground border border-l-0 rounded-l-none bg-background"
+										className="h-5 w-5 rounded-l-none border border-l-0 bg-background text-muted-foreground hover:text-foreground"
 									>
 										{rerunning === item.id ? (
 											<Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -264,7 +265,7 @@ export function HistoryPage() {
 										title="Delete this entry"
 										disabled={deleting === item.id || rerunning === item.id}
 										onClick={() => handleDelete(item.id)}
-										className="h-5 w-5 text-muted-foreground hover:text-destructive  border border-l-0 rounded-l-none bg-background"
+										className="h-5 w-5 rounded-l-none border border-l-0 bg-background text-muted-foreground hover:text-destructive"
 									>
 										{deleting === item.id ? (
 											<Loader2 className="h-3.5 w-3.5 animate-spin" />

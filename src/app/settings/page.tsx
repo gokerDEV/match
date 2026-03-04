@@ -7,10 +7,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -22,9 +19,12 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { historyService } from "@/services/storage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
+import { historyService } from "@/services/storage";
 
 export function SettingsPage() {
 	const { settings, loading, saving, updateSettings } = useSettings();
@@ -212,7 +212,9 @@ export function SettingsPage() {
 							<AlertDialogHeader>
 								<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
 								<AlertDialogDescription>
-									Are you sure you want to clear the locally cached extractions? This will free up storage but slightly slow down re-analysis of previously visited URLs.
+									Are you sure you want to clear the locally cached extractions?
+									This will free up storage but slightly slow down re-analysis
+									of previously visited URLs.
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>

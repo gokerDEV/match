@@ -1,12 +1,12 @@
 import { Outlet } from "react-router-dom";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { AppLoader } from "./app.loader";
 import { AppSidebar } from "./app.sidebar";
 import { Credits } from "./credits";
 import { Header } from "./header";
 import { SystemProvider } from "./system.context";
-import { Toaster } from "@/components/ui/sonner";
 
 export default function Layout() {
 	const { settings, loading } = useSettings();

@@ -17,14 +17,18 @@ function waitForDom(timeoutMs = 8000): Promise<void> {
 		};
 
 		const check = () => {
-			const mainEl = document.querySelector("main") || document.querySelector("article");
-			const mainLen = mainEl?.textContent?.replace(/\s+/g, " ").trim().length ?? 0;
+			const mainEl =
+				document.querySelector("main") || document.querySelector("article");
+			const mainLen =
+				mainEl?.textContent?.replace(/\s+/g, " ").trim().length ?? 0;
 
 			// We must wait until the <main> text is populated!
 			// If it's a SPA, the main tag might exist but be empty initially.
 			// If there's truly NO main/article element, we fallback to body length,
 			// but if they exist, we STRICTLY wait for them to have content.
-			const isReady = document.readyState === "complete" && (mainEl ? mainLen > 50 : document.body.innerText.length > 200);
+			const isReady =
+				document.readyState === "complete" &&
+				(mainEl ? mainLen > 50 : document.body.innerText.length > 200);
 
 			if (isReady) {
 				complete();
@@ -45,7 +49,7 @@ function waitForDom(timeoutMs = 8000): Promise<void> {
 				childList: true,
 				subtree: true,
 				attributes: true,
-				characterData: true
+				characterData: true,
 			});
 
 			// If things never populate, force resolve when deadline hits
@@ -80,8 +84,14 @@ chrome.runtime.onMessage.addListener(
 				// Academic Debugging: If mainText is empty or low, log precisely what <main> looks like
 				if ((domSignals.mainText?.length ?? 0) < 50) {
 					const m = document.querySelector("main");
-					log("CRITICAL DEBUG - main HTML:", m ? m.outerHTML.substring(0, 1000) : "NULL");
-					log("CRITICAL DEBUG - body text length:", document.body.innerText.length);
+					log(
+						"CRITICAL DEBUG - main HTML:",
+						m ? m.outerHTML.substring(0, 1000) : "NULL",
+					);
+					log(
+						"CRITICAL DEBUG - body text length:",
+						document.body.innerText.length,
+					);
 				}
 
 				const axeSignals = await extractAxeSignals();

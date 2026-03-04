@@ -40,7 +40,9 @@ async function extractFromTab(
 				files: [scriptFile],
 			});
 		} catch (injectErr) {
-			throw new Error(`Cannot inject content script (restricted page?): ${injectErr instanceof Error ? injectErr.message : injectErr}`);
+			throw new Error(
+				`Cannot inject content script (restricted page?): ${injectErr instanceof Error ? injectErr.message : injectErr}`,
+			);
 		}
 
 		// Give the script time to register its message listener
@@ -48,7 +50,9 @@ async function extractFromTab(
 		try {
 			return await send();
 		} catch (retryErr) {
-			throw new Error(`Content script injected but still unreachable: ${retryErr instanceof Error ? retryErr.message : retryErr}`);
+			throw new Error(
+				`Content script injected but still unreachable: ${retryErr instanceof Error ? retryErr.message : retryErr}`,
+			);
 		}
 	}
 }

@@ -1,10 +1,10 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useSettings } from "@/hooks/use-settings";
 import { HeatmapRow, MATCH_COLUMNS } from "@/components/common/heatmap.row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSettings } from "@/hooks/use-settings";
 import { generateBatchReport } from "@/lib/report.utils";
 import { cn } from "@/lib/utils";
 import type {
@@ -259,7 +259,7 @@ export const MatchDashboard: React.FC = () => {
 											}}
 											placeholder={`URL ${i + 1} (e.g. https://example.com)`}
 											className={cn(
-												"min-w-0 flex-1 ",
+												"min-w-0 flex-1",
 												contextualColor && `border-color-[${contextualColor}]`,
 											)}
 										/>

@@ -6,6 +6,8 @@ export function Logo() {
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="4 4 16 16"
 					className="size-8"
+					aria-label="MATCH"
+					role="img"
 				>
 					<g
 						transform="translate(3,3) scale(0.75)"

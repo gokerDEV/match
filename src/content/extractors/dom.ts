@@ -54,11 +54,11 @@ export const extractDomSignals = () => {
 		content: meta.getAttribute("content") || "",
 	}));
 
-	// The actual content logic. In SSR sites (e.g. Next.js App Router), 
+	// The actual content logic. In SSR sites (e.g. Next.js App Router),
 	// <main> might exist but hold zero text (e.g. just a loading spinner SVG),
 	// while the actual content was rendered inside a sibling <article> tag.
 	const mainElement = document.querySelector("main");
-	let mainText = mainElement?.textContent?.replace(/\s+/g, " ").trim() || "";
+	const mainText = mainElement?.textContent?.replace(/\s+/g, " ").trim() || "";
 
 	// if (mainText.length < 50) {
 	// 	const articleElement = document.querySelector("article, #main, [role='main']");
