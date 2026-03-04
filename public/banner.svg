@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 820 140" role="img" aria-label="MATCH banner">
+  <defs>
+    <style>
+      .tileText { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; font-weight: 800; fill: #fff; }
+      .subtitle { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; font-weight: 600; fill: #1c1917; opacity: .75; }
+    </style>
+  </defs>
+
+
+  <!-- Left logo block -->
+    <g transform="translate(10,10) scale(5)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2" stroke="#DD4433" />
+      <path d="M17 3h2a2 2 0 0 1 2 2v2" stroke="#4488FF" />
+      <path d="M21 17v2a2 2 0 0 1-2 2h-2" stroke="#FFBB00" />
+      <path d="M7 21H5a2 2 0 0 1-2-2v-2" stroke="#11AA55" />
+      <circle cx="12" cy="12" r="3" stroke="#8844BB" />
+      <path d="m16 16-1.9-1.9" stroke="#8844BB" />
+  </g>
+
+  <!-- MATCH tiles -->
+  <g transform="translate(160,28)">
+    <g>
+      <rect x="0"   y="0" width="120" height="84" rx="14" fill="#DD4433"/>
+      <rect x="132" y="0" width="120" height="84" rx="14" fill="#4488FF"/>
+      <rect x="264" y="0" width="120" height="84" rx="14" fill="#FFBB00"/>
+      <rect x="396" y="0" width="120" height="84" rx="14" fill="#8844BB"/>
+      <rect x="528" y="0" width="120" height="84" rx="14" fill="#11AA55"/>
+
+      <text class="tileText" x="60"  y="56" font-size="44" text-anchor="middle">M</text>
+      <text class="tileText" x="192" y="56" font-size="44" text-anchor="middle">A</text>
+      <text class="tileText" x="324" y="56" font-size="44" text-anchor="middle">T</text>
+      <text class="tileText" x="456" y="56" font-size="44" text-anchor="middle">C</text>
+      <text class="tileText" x="588" y="56" font-size="44" text-anchor="middle">H</text>
+    </g>
+  </g>
+</svg>
