@@ -1,0 +1,33 @@
+export function Logo() {
+	return (
+		<>
+			<div className="aspect-square">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="4 4 16 16"
+					className="size-8"
+				>
+					<g
+						transform="translate(3,3) scale(0.75)"
+						fill="none"
+						stroke="#1c1917"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					>
+						<path d="M3 7V5a2 2 0 0 1 2-2h2" stroke="#DD4433" />
+						<path d="M17 3h2a2 2 0 0 1 2 2v2" stroke="#4488FF" />
+						<path d="M21 17v2a2 2 0 0 1-2 2h-2" stroke="#FFBB00" />
+						<path d="M7 21H5a2 2 0 0 1-2-2v-2" stroke="#11AA55" />
+						<circle cx="12" cy="12" r="3" stroke="#8844BB" />
+						<path d="m16 16-1.9-1.9" stroke="#8844BB" />
+					</g>
+				</svg>
+			</div>
+			<div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+				<span className="truncate font-semibold">MATCH</span>
+				<span className="truncate text-xs">by goker</span>
+			</div>
+		</>
+	);
+}
