@@ -5,10 +5,14 @@
 
 <img src="public/banner.svg" width="400" alt="MATCH" style="padding-bottom: 10px;" />
 
+<img src="public/match-extension.gif" width="350" alt="MATCH" align="right" style="margin-left: 20px;" />
+
 **MATCH** is a deterministic, local-first Web Quality Linter delivered as a Chrome Extension. It evaluates a page against strict engineering and semantic standards.
 
-MATCH does NOT aim to discover what a website "has".
+MATCH does NOT aim to discover what a website "has".<br>
 MATCH answers: "Is what MUST exist present, and is it correct?"
+
+---
 
 ### Evaluation Pillars
 
