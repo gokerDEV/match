@@ -5,15 +5,15 @@
 
 <table width="100%">
   <tr>
-    <td width="32px" valign="center"><img src="public/icon.svg" width="32" height="32" alt="MATCH Icon" style="padding-bottom: 10px;" /></td>
+    <td valign="center"><img src="public/icon.svg" width="32" height="32" alt="MATCH Icon" style="padding-bottom: 10px;" /></td>
     <td>
 <table width="100%" style="text-align:center; color:white; font-size:24px; font-weight:bold;">
   <tr>
-    <td width="20%" bgcolor="#DD4433">M</td>
-    <td width="20%" bgcolor="#4488FF">A</td>
-    <td width="20%" bgcolor="#FFBB00">T</td>
-    <td width="20%" bgcolor="#8844BB">C</td>
-    <td width="20%" bgcolor="#11AA55">H</td>
+    <td width="20%" style="background-color:#DD4433">M</td>
+    <td width="20%" style="background-color:#4488FF">A</td>
+    <td width="20%" style="background-color:#FFBB00">T</td>
+    <td width="20%" style="background-color:#8844BB">C</td>
+    <td width="20%" style="background-color:#11AA55">H</td>
   </tr>
 </table>
 </td>
@@ -29,27 +29,27 @@ MATCH answers: "Is what MUST exist present, and is it correct?"
 
 <table>
   <tr>
-    <td align="center" bgcolor="#DD4433" style="color:white; font-size:18px; font-weight:bold; width: 48px;">M</td>
+    <td align="center" style="background-color:#DD4433; color:white; font-size:18px; font-weight:bold; width: 48px;">M</td>
     <td width="200px"><strong>Metadata Precision</strong></td>
     <td>Title + essential meta correctness.</td>
   </tr>
   <tr>
-    <td align="center" bgcolor="#4488FF" style="color:white; font-size:18px; font-weight:bold; width: 48px;">A</td>
+    <td align="center" style="background-color:#4488FF; color:white; font-size:18px; font-weight:bold; width: 48px;">A</td>
     <td><strong>Access Quality</strong></td>
     <td>Strict A11y baseline checks (deterministic).</td>
   </tr>
   <tr>
-    <td align="center" bgcolor="#FFBB00" style="color:white; font-size:18px; font-weight:bold; width: 48px;">T</td>
+    <td align="center" style="background-color:#FFBB00; color:white; font-size:18px; font-weight:bold; width: 48px;">T</td>
     <td><strong>Technical Hygiene</strong></td>
     <td>Console/runtime/network hygiene and technical cleanliness.</td>
   </tr>
   <tr>
-    <td align="center" bgcolor="#8844BB" style="color:white; font-size:18px; font-weight:bold; width: 48px;">C</td>
+    <td align="center" style="background-color:#8844BB; color:white; font-size:18px; font-weight:bold; width: 48px;">C</td>
     <td><strong>Contextual Relevancy</strong></td>
     <td>Page content alignment with the user-provided Search Term.</td>
   </tr>
   <tr>
-    <td align="center" bgcolor="#11AA55" style="color:white; font-size:18px; font-weight:bold; width: 48px;">H</td>
+    <td align="center" style="background-color:#11AA55; color:white; font-size:18px; font-weight:bold; width: 48px;">H</td>
     <td><strong>Hierarchy Integrity</strong></td>
     <td>Structural and semantic correctness: main/article/heading integrity/landmarks.</td>
   </tr>
