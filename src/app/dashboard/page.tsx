@@ -83,7 +83,7 @@ export const MatchDashboard: React.FC = () => {
 			}
 
 			appendLog(`Creating isolated background tab for: ${url}`);
-			const tab = await chrome.tabs.create({ url, active: false });
+			const tab = await chrome.tabs.create({ url, active: true });
 			if (!tab.id) throw new Error("Could not create tab");
 
 			appendLog("Waiting for tab to finish loading...");

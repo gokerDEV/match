@@ -58,7 +58,7 @@ export const extractDomSignals = () => {
 	// <main> might exist but hold zero text (e.g. just a loading spinner SVG),
 	// while the actual content was rendered inside a sibling <article> tag.
 	const mainElement = document.querySelector("main");
-	const mainText = mainElement?.textContent?.replace(/\s+/g, " ").trim() || "";
+	const mainText = String(mainElement?.textContent); //?.replace(/\s+/g, " ").trim() || "";
 
 	// if (mainText.length < 50) {
 	// 	const articleElement = document.querySelector("article, #main, [role='main']");

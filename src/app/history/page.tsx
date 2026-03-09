@@ -59,7 +59,7 @@ export function HistoryPage() {
 			}
 
 			// Open the URL in a hidden background tab
-			const tab = await chrome.tabs.create({ url: item.url, active: false });
+			const tab = await chrome.tabs.create({ url: item.url, active: true });
 			if (!tab.id) throw new Error("Could not create tab");
 
 			// Wait for tab to finish loading (max 30s)
@@ -96,9 +96,7 @@ export function HistoryPage() {
 				RUN_ANALYSIS_MESSAGE,
 				RUN_ANALYSIS_RESPONSE
 			>(message);
-
 			await chrome.tabs.remove(tab.id);
-
 			if (response?.success && response.scores) {
 				// Update the row in-place optimistically
 				setHistory((prev) =>
