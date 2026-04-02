@@ -3,7 +3,8 @@ import type { Extractions, Inputs, Metrics } from "@/lib/types/engine";
 export type MessageType =
 	| "EXTRACT_SIGNALS"
 	| "RUN_ANALYSIS"
-	| "GET_CACHED_EXTRACTIONS";
+	| "GET_CACHED_EXTRACTIONS"
+	| "RUN_DEEP_DIVE";
 
 export interface EXTRACT_SIGNALS_MESSAGE {
 	type: "EXTRACT_SIGNALS";
@@ -45,5 +46,25 @@ export interface RUN_ANALYSIS_RESPONSE {
 	metrics?: Metrics;
 	inputs?: Inputs;
 	logs?: string[];
+	error?: string;
+}
+
+export interface RUN_DEEP_DIVE_MESSAGE {
+	type: "RUN_DEEP_DIVE";
+	payload: {
+		searchTerm?: string;
+		links: string[];
+	};
+}
+
+export interface RUN_DEEP_DIVE_ROW {
+	url: string;
+	scores?: number[];
+	error?: string;
+}
+
+export interface RUN_DEEP_DIVE_RESPONSE {
+	success: boolean;
+	rows?: RUN_DEEP_DIVE_ROW[];
 	error?: string;
 }

@@ -7,6 +7,8 @@ import type {
 	GET_CACHED_EXTRACTIONS_RESPONSE,
 	RUN_ANALYSIS_MESSAGE,
 	RUN_ANALYSIS_RESPONSE,
+	RUN_DEEP_DIVE_MESSAGE,
+	RUN_DEEP_DIVE_RESPONSE,
 } from "@/services/messaging";
 import { historyService, settingsService, storage } from "@/services/storage";
 
@@ -107,6 +109,54 @@ async function extractFromTab(
 			throw new Error(
 				`Content script injected but still unreachable: ${retryErr instanceof Error ? retryErr.message : retryErr}`,
 			);
+		}
+	}
+}
+
+async function waitForTabComplete(
+	tabId: number,
+	timeoutMs = 20000,
+): Promise<void> {
+	const tab = await chrome.tabs.get(tabId);
+	if (tab.status === "complete") return;
+
+	await new Promise<void>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			chrome.tabs.onUpdated.removeListener(onUpdated);
+			reject(new Error("Timed out waiting for tab to finish loading."));
+		}, timeoutMs);
+
+		const onUpdated = (
+			updatedTabId: number,
+			changeInfo: { status?: string },
+		) => {
+			if (updatedTabId !== tabId) return;
+			if (changeInfo.status !== "complete") return;
+			clearTimeout(timeout);
+			chrome.tabs.onUpdated.removeListener(onUpdated);
+			resolve();
+		};
+
+		chrome.tabs.onUpdated.addListener(onUpdated);
+	});
+}
+
+async function extractFromUrl(url: string): Promise<EXTRACT_SIGNALS_RESPONSE> {
+	const createdTab = await chrome.tabs.create({ url, active: false });
+	if (!createdTab.id) {
+		throw new Error(
+			"Could not create background tab for deep-dive extraction.",
+		);
+	}
+
+	try {
+		await waitForTabComplete(createdTab.id);
+		return await extractFromTab(createdTab.id);
+	} finally {
+		try {
+			await chrome.tabs.remove(createdTab.id);
+		} catch {
+			// ignore tab close failures
 		}
 	}
 }
@@ -258,5 +308,88 @@ chrome.runtime.onMessage.addListener(
 		})();
 
 		return true; // keep the message channel open for the async response
+	},
+);
+
+// ── RUN_DEEP_DIVE handler ────────────────────────────────────────────────────
+
+chrome.runtime.onMessage.addListener(
+	(message: RUN_DEEP_DIVE_MESSAGE, _sender, sendResponse) => {
+		if (message.type !== "RUN_DEEP_DIVE") return;
+
+		(async () => {
+			try {
+				const searchTerm = message.payload.searchTerm || "";
+				const links = Array.isArray(message.payload.links)
+					? message.payload.links
+							.filter((link): link is string => typeof link === "string")
+							.filter((link) => /^https?:\/\//i.test(link))
+					: [];
+
+				if (links.length === 0) {
+					throw new Error("No valid internal links found for deep-dive.");
+				}
+
+				const rows: Array<{ url: string; scores?: number[]; error?: string }> =
+					[];
+
+				for (const url of links) {
+					try {
+						const urlHash = storage.hash(url);
+						let extractions = await storage.get<Extractions>(`ext_${urlHash}`);
+
+						if (!extractions) {
+							const extracted = await extractFromUrl(url);
+							if (!extracted.success || !extracted.data) {
+								throw new Error(
+									extracted.error ?? "Failed to extract target internal link.",
+								);
+							}
+							extractions = extracted.data;
+							await storage.set(`ext_${urlHash}`, extractions);
+						}
+
+						const inputs: Inputs = {
+							url,
+							searchTerm,
+							timestamp: Date.now(),
+						};
+
+						const { metrics: metricsMap } = await runMetrics(
+							extractions,
+							inputs,
+						);
+						const scores = [
+							metricsMap.metadata_precision?.normalized ?? 0,
+							metricsMap.access_quality?.normalized ?? 0,
+							metricsMap.technical_hygiene?.normalized ?? 0,
+							metricsMap.contextual_relevancy?.normalized ?? 0,
+							metricsMap.hierarchy_integrity?.normalized ?? 0,
+						];
+
+						rows.push({ url, scores });
+					} catch (error) {
+						rows.push({
+							url,
+							error:
+								error instanceof Error ? error.message : "Deep-dive run failed",
+						});
+					}
+				}
+
+				sendResponse({
+					success: true,
+					rows,
+				} as RUN_DEEP_DIVE_RESPONSE);
+			} catch (error) {
+				sendResponse({
+					success: false,
+					error:
+						error instanceof Error ? error.message : "Failed to run deep-dive",
+				} as RUN_DEEP_DIVE_RESPONSE);
+			}
+		})();
+
+		return true;
 	},
 );

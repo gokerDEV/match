@@ -1,5 +1,6 @@
 import { LinkIcon } from "lucide-react";
 import type React from "react";
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import type { LinkItem } from "./helpers";
 import { ExtractionSection } from "./shared";
 
@@ -8,25 +9,27 @@ interface LinksPanelProps {
 	externalLinks: LinkItem[];
 }
 
+const MAX_RENDERED_LINKS = 100;
+
 const LinksList: React.FC<{ links: LinkItem[] }> = ({ links }) => (
 	// <ScrollArea className="h-44 rounded border bg-muted/20">
-	<div className="flex flex-col gap-2">
-		{links.map((link) => (
-			<div key={link.href} className="rounded border bg-background p-2">
-				<p className="truncate font-medium text-xs">
-					{link.text || "(no anchor text)"}
-				</p>
-				<a
-					href={link.href}
-					target="_blank"
-					rel="noreferrer"
-					className="block break-all text-[10px] text-muted-foreground hover:underline"
-				>
-					{link.href}
-				</a>
-			</div>
-		))}
-	</div>
+		<div className="flex flex-col gap-2 p-2">
+			{links.map((link) => (
+				<div key={link.href} className="rounded border bg-background p-2">
+					<p className="truncate font-medium text-xs">
+						{link.text || "(no anchor text)"}
+					</p>
+					<a
+						href={link.href}
+						target="_blank"
+						rel="noreferrer"
+						className="block break-all text-[10px] text-muted-foreground hover:underline"
+					>
+						{link.href}
+					</a>
+				</div>
+			))}
+		</div>
 	// </ScrollArea>
 );
 
@@ -35,6 +38,8 @@ export const LinksPanel: React.FC<LinksPanelProps> = ({
 	externalLinks,
 }) => {
 	if (internalLinks.length === 0 && externalLinks.length === 0) return null;
+	const visibleInternalLinks = internalLinks.slice(0, MAX_RENDERED_LINKS);
+	const visibleExternalLinks = externalLinks.slice(0, MAX_RENDERED_LINKS);
 
 	return (
 		<ExtractionSection
@@ -46,8 +51,13 @@ export const LinksPanel: React.FC<LinksPanelProps> = ({
 					<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
 						Internal Links ({internalLinks.length})
 					</span>
-					{internalLinks.length > 0 ? (
-						<LinksList links={internalLinks} />
+					{internalLinks.length > MAX_RENDERED_LINKS && (
+						<p className="text-[10px] text-muted-foreground">
+							Showing first {MAX_RENDERED_LINKS} links.
+						</p>
+					)}
+					{visibleInternalLinks.length > 0 ? (
+						<LinksList links={visibleInternalLinks} />
 					) : (
 						<p className="text-muted-foreground text-xs">No internal links.</p>
 					)}
@@ -57,8 +67,13 @@ export const LinksPanel: React.FC<LinksPanelProps> = ({
 					<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
 						External Links ({externalLinks.length})
 					</span>
-					{externalLinks.length > 0 ? (
-						<LinksList links={externalLinks} />
+					{externalLinks.length > MAX_RENDERED_LINKS && (
+						<p className="text-[10px] text-muted-foreground">
+							Showing first {MAX_RENDERED_LINKS} links.
+						</p>
+					)}
+					{visibleExternalLinks.length > 0 ? (
+						<LinksList links={visibleExternalLinks} />
 					) : (
 						<p className="text-muted-foreground text-xs">No external links.</p>
 					)}

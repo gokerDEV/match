@@ -1,4 +1,9 @@
-import { DatabaseIcon, SearchCheckIcon, Settings2Icon } from "lucide-react";
+import {
+	DatabaseIcon,
+	RadarIcon,
+	SearchCheckIcon,
+	Settings2Icon,
+} from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import {
@@ -11,18 +16,21 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { CheckView } from "./components/check.view";
+import { DeepDiveView } from "./components/deep-dive.view";
 import { ExtractionsView } from "./components/extractions.view";
 import { SettingsView } from "./components/settings.view";
 
 const NAV_ITEMS = [
 	{ id: "check", label: "Check", icon: SearchCheckIcon },
 	{ id: "extraction", label: "Extraction", icon: DatabaseIcon },
+	{ id: "deep-dive", label: "Deep Dive", icon: RadarIcon },
 	{ id: "settings", label: "Settings", icon: Settings2Icon },
 ];
 
 const VIEW_MAP: Record<string, React.ComponentType> = {
 	check: CheckView,
 	extraction: ExtractionsView,
+	"deep-dive": DeepDiveView,
 	settings: SettingsView,
 };
 
