@@ -10,7 +10,6 @@ import type {
 } from "@/services/messaging";
 import { historyService, settingsService, storage } from "@/services/storage";
 
-
 const SESSION_TAB_KEY = "match_last_tab_id";
 
 // Persist the last active browser tab ID to session storage.
@@ -61,7 +60,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 		persistActiveTab(tab.id);
 	}
 });
-
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -192,7 +190,8 @@ chrome.runtime.onMessage.addListener(
 
 				await historyService.addHistory(
 					{
-						id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+						id:
+							Date.now().toString(36) + Math.random().toString(36).substring(2),
 						url,
 						searchTerm,
 						timestamp: Date.now(),
@@ -250,7 +249,10 @@ chrome.runtime.onMessage.addListener(
 				console.error("[MATCH] GET_CACHED_EXTRACTIONS failed:", err);
 				sendResponse({
 					success: false,
-					error: err instanceof Error ? err.message : "Failed to get cached extractions",
+					error:
+						err instanceof Error
+							? err.message
+							: "Failed to get cached extractions",
 				} as GET_CACHED_EXTRACTIONS_RESPONSE);
 			}
 		})();

@@ -1,22 +1,22 @@
+import { XIcon } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { XIcon } from "lucide-react";
 import { HeatmapRow, MATCH_COLUMNS } from "@/components/common/heatmap.row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { generateReport } from "@/lib/report.utils";
 import type { Inputs, Metrics } from "@/lib/types/engine";
+import { cn } from "@/lib/utils";
 import type {
 	RUN_ANALYSIS_MESSAGE,
 	RUN_ANALYSIS_RESPONSE,
 } from "@/services/messaging";
-import { MetaTab } from "./tabs/meta.tab";
 import { AccessibilityTab } from "./tabs/accessibility.tab";
-import { TechnicalTab } from "./tabs/technical.tab";
 import { ContextualTab } from "./tabs/contextual.tab";
 import { HierarchyTab } from "./tabs/hierarchy.tab";
-import { cn } from "@/lib/utils";
+import { MetaTab } from "./tabs/meta.tab";
+import { TechnicalTab } from "./tabs/technical.tab";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -141,7 +141,7 @@ export const CheckView: React.FC = () => {
 			} else {
 				throw new Error(
 					response?.error ||
-					"Analysis failed. Make sure the page has fully loaded and is a valid HTTP(s) URL.",
+						"Analysis failed. Make sure the page has fully loaded and is a valid HTTP(s) URL.",
 				);
 			}
 		} catch (err: unknown) {
@@ -171,9 +171,9 @@ export const CheckView: React.FC = () => {
 	const ActiveTabComponent = activeTab ? TAB_COMPONENTS[activeTab] : null;
 
 	return (
-		<div className="relative flex h-full flex-col bg-background overflow-hidden">
+		<div className="relative flex h-full flex-col overflow-hidden bg-background">
 			{/* ── Main scrollable content ── */}
-			<div className="flex flex-col gap-4 overflow-y-auto p-4 flex-1">
+			<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
 				{/* Heatmap + clickable column headers */}
 				<div className="mt-2 flex flex-col gap-2">
 					<div className="grid grid-cols-5 gap-1 text-center font-bold text-[8px] text-muted-foreground uppercase tracking-wider">
@@ -184,7 +184,7 @@ export const CheckView: React.FC = () => {
 								onClick={() => handleOpenTab(col.letter)}
 								className={cn(
 									"flex flex-col items-center justify-end gap-0.5 rounded transition-opacity",
-									"hover:opacity-75 active:opacity-50 uppercase",
+									"uppercase hover:opacity-75 active:opacity-50",
 									activeTab === col.letter && "opacity-100",
 								)}
 								aria-label={`View ${col.title} metrics`}
@@ -290,35 +290,35 @@ export const CheckView: React.FC = () => {
 			    the rest of the panel to the bottom. Slides in from below. */}
 			{ActiveTabComponent && activeCol && (
 				<div
-					className="absolute inset-x-0 bottom-0 z-20 flex flex-col bg-background shadow-lg border-t"
+					className="absolute inset-x-0 bottom-0 z-20 flex flex-col border-t bg-background shadow-lg"
 					style={{ top: `${overlayTop}px` }}
 				>
 					{/* Overlay header */}
 					<div
-						className="flex items-center justify-between px-4 py-2 border-b"
-						style={{ borderColor: activeCol.ideal + "44" }}
+						className="flex items-center justify-between border-b px-4 py-2"
+						style={{ borderColor: `${activeCol.ideal}44` }}
 					>
 						<div className="flex items-center gap-2">
 							<span
-								className="flex h-5 w-5 items-center justify-center rounded-sm text-xs font-extrabold text-white"
+								className="flex h-5 w-5 items-center justify-center rounded-sm font-extrabold text-white text-xs"
 								style={{ backgroundColor: activeCol.ideal }}
 							>
 								{activeCol.letter}
 							</span>
-							<span className="text-sm font-semibold">{activeCol.title}</span>
+							<span className="font-semibold text-sm">{activeCol.title}</span>
 						</div>
 						<button
 							type="button"
 							onClick={() => setActiveTab(null)}
 							aria-label="Close"
-							className="rounded-sm p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+							className="rounded-sm p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 						>
 							<XIcon className="size-4" />
 						</button>
 					</div>
 
 					{/* Scrollable metric list */}
-					<div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+					<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
 						<ActiveTabComponent metrics={fullMetrics} />
 					</div>
 				</div>

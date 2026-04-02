@@ -15,7 +15,7 @@
 		"dev": "vite",
 		"prebuild": "bun run scripts/build.metrics.ts && bun run scripts/download.model.ts",
 		"build": "tsc -b && vite build",
-		"lint": "biome check --fix src",
+		"lint": "biome check --write src",
 		"format": "biome format --write src",
 		"preview": "vite preview"
 	},

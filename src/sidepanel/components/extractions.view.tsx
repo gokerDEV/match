@@ -1,7 +1,8 @@
-import type React from "react";
-import { useEffect, useState } from "react";
 import { DatabaseIcon, RefreshCwIcon } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import type { Extractions } from "@/lib/types/engine";
 import type {
 	GET_CACHED_EXTRACTIONS_MESSAGE,
@@ -10,7 +11,10 @@ import type {
 
 const SESSION_TAB_KEY = "match_last_tab_id";
 
-const fetchActiveTab = async (): Promise<{ tabId: number; url: string } | null> => {
+const fetchActiveTab = async (): Promise<{
+	tabId: number;
+	url: string;
+} | null> => {
 	try {
 		const result = await chrome.storage.session.get(SESSION_TAB_KEY);
 		const tabId = result[SESSION_TAB_KEY];
@@ -23,7 +27,9 @@ const fetchActiveTab = async (): Promise<{ tabId: number; url: string } | null> 
 	}
 };
 
-const getCachedExtractions = async (url: string): Promise<Extractions | null> => {
+const getCachedExtractions = async (
+	url: string,
+): Promise<Extractions | null> => {
 	try {
 		const response = await chrome.runtime.sendMessage<
 			GET_CACHED_EXTRACTIONS_MESSAGE,
@@ -65,11 +71,11 @@ const ExtractionSection: React.FC<ExtractionSectionProps> = ({
 	children,
 }) => (
 	<div className="rounded-md border bg-card">
-		<div className="flex items-center gap-2 border-b px-3 py-2 bg-muted/40">
+		<div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
 			{icon}
-			<h3 className="text-xs font-semibold">{title}</h3>
+			<h3 className="font-semibold text-xs">{title}</h3>
 		</div>
-		<div className="p-3 flex flex-col gap-2">{children}</div>
+		<div className="flex flex-col gap-2 p-3">{children}</div>
 	</div>
 );
 
@@ -88,7 +94,7 @@ const ExtractionField: React.FC<ExtractionFieldProps> = ({ label, value }) => {
 			<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
 				{label}
 			</span>
-			<span className="text-xs font-medium break-all">{displayValue}</span>
+			<span className="break-all font-medium text-xs">{displayValue}</span>
 		</div>
 	);
 };
@@ -99,7 +105,7 @@ export const ExtractionsView: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [tabUrl, setTabUrl] = useState<string>("");
 
-	const loadExtractions = async () => {
+	const loadExtractions = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -112,18 +118,22 @@ export const ExtractionsView: React.FC = () => {
 			if (data) {
 				setExtractions(data);
 			} else {
-				throw new Error("No cached extractions found. Please run analysis first.");
+				throw new Error(
+					"No cached extractions found. Please run analysis first.",
+				);
 			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load extractions");
+			setError(
+				err instanceof Error ? err.message : "Failed to load extractions",
+			);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
-		loadExtractions();
-	}, []);
+		loadExtractions().then();
+	}, [loadExtractions]);
 
 	const ogTags = Array.isArray(extractions?.ogTags)
 		? (extractions.ogTags as Array<{ property: string; content: string }>)
@@ -135,15 +145,20 @@ export const ExtractionsView: React.FC = () => {
 		? (extractions.h1List as string[])
 		: [];
 	const perfData = extractions?.performance as
-		| { ttfb: number; domInteractive: number; fcp: number; resourceCount: number }
+		| {
+				ttfb: number;
+				domInteractive: number;
+				fcp: number;
+				resourceCount: number;
+		  }
 		| undefined;
 
 	return (
-		<div className="p-4 flex h-full flex-col gap-4 bg-background">
-			<div className="flex items-center justify-between">
+		<div className="flex h-full flex-col bg-background">
+			<div className="m-4 flex items-center justify-between">
 				<div className="flex flex-col gap-1">
-					<h2 className="text-sm font-semibold">Extractions</h2>
-					<p className="text-xs text-muted-foreground">
+					<h2 className="font-semibold text-sm">Extractions</h2>
+					<p className="text-muted-foreground text-xs">
 						Raw signals extracted from the active page
 					</p>
 				</div>
@@ -161,194 +176,231 @@ export const ExtractionsView: React.FC = () => {
 				</Button>
 			</div>
 
-			{tabUrl && (
-				<div className="rounded-md border bg-muted/40 px-3 py-2">
-					<span className="text-[10px] text-muted-foreground uppercase">
-						Current URL
-					</span>
-					<p className="text-xs font-medium truncate">{tabUrl}</p>
-				</div>
-			)}
-
-			{loading && !extractions && (
-				<div className="flex flex-1 items-center justify-center">
-					<div className="flex flex-col items-center gap-2 text-muted-foreground">
-						<RefreshCwIcon className="size-4 animate-spin" />
-						<span className="text-xs">Extracting signals...</span>
+			<div className="mx-4">
+				{tabUrl && (
+					<div className="rounded-md border bg-muted/40 px-3 py-2">
+						<span className="text-[10px] text-muted-foreground uppercase">
+							Current URL
+						</span>
+						<p className="truncate font-medium text-xs">{tabUrl}</p>
 					</div>
-				</div>
-			)}
+				)}
 
-			{error && (
-				<div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
-					<p className="text-xs text-destructive">{error}</p>
-					<p className="text-xs text-destructive mt-1">
-						Please run analysis from the Check tab first.
-					</p>
-				</div>
-			)}
-
-			{!loading && !extractions && !error && (
-				<div className="flex flex-1 items-center justify-center rounded-md border border-dashed">
-					<div className="flex flex-col items-center gap-2 text-muted-foreground">
-						<DatabaseIcon className="size-4" />
-						<p className="text-xs">No data yet</p>
+				{loading && !extractions && (
+					<div className="flex flex-1 items-center justify-center">
+						<div className="flex flex-col items-center gap-2 text-muted-foreground">
+							<RefreshCwIcon className="size-4 animate-spin" />
+							<span className="text-xs">Extracting signals...</span>
+						</div>
 					</div>
-				</div>
-			)}
+				)}
 
+				{error && (
+					<div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
+						<p className="text-destructive text-xs">{error}</p>
+						<p className="mt-1 text-destructive text-xs">
+							Please run analysis from the Check tab first.
+						</p>
+					</div>
+				)}
+
+				{!loading && !extractions && !error && (
+					<div className="flex flex-1 items-center justify-center rounded-md border border-dashed">
+						<div className="flex flex-col items-center gap-2 text-muted-foreground">
+							<DatabaseIcon className="size-4" />
+							<p className="text-xs">No data yet</p>
+						</div>
+					</div>
+				)}
+			</div>
 			{extractions && (
-				<div className="flex flex-1 flex-col gap-4 overflow-y-auto">
-					{/* DOM Signals */}
-					<ExtractionSection
-						title="DOM Signals"
-						icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-					>
-						<ExtractionField label="Title" value={getString(extractions.title)} />
-						<ExtractionField
-							label="Meta Description"
-							value={getString(extractions.metaDescription)}
-						/>
-						<ExtractionField label="Canonical URL" value={getString(extractions.canonicalUrl)} />
-						<ExtractionField label="HTML Lang" value={getString(extractions.htmlLang)} />
-						<ExtractionField
-							label="Viewport"
-							value={getString(extractions.viewportMeta)}
-						/>
-						{h1List.length > 0 && (
-							<div className="flex flex-col gap-0.5">
-								<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-									H1 Headings ({h1List.length})
-								</span>
-								<ul className="text-xs space-y-1">
-									{h1List.map((h1, i) => (
-										<li key={i} className="font-medium break-all">
-											{h1 || "—"}
-										</li>
-									))}
-								</ul>
+				<ScrollArea className="overflow-y-auto">
+					<div className="flex grow flex-col gap-4 p-4">
+						{/* DOM Signals */}
+						<ExtractionSection
+							title="DOM Signals"
+							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
+						>
+							<ExtractionField
+								label="Title"
+								value={getString(extractions.title)}
+							/>
+							<ExtractionField
+								label="Meta Description"
+								value={getString(extractions.metaDescription)}
+							/>
+							<ExtractionField
+								label="Canonical URL"
+								value={getString(extractions.canonicalUrl)}
+							/>
+							<ExtractionField
+								label="HTML Lang"
+								value={getString(extractions.htmlLang)}
+							/>
+							<ExtractionField
+								label="Viewport"
+								value={getString(extractions.viewportMeta)}
+							/>
+							{h1List.length > 0 && (
+								<div className="flex flex-col gap-0.5">
+									<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+										H1 Headings ({h1List.length})
+									</span>
+									<ul className="space-y-1 text-xs">
+										{h1List.map((h1, i) => (
+											// biome-ignore lint/suspicious/noArrayIndexKey: single print
+											<li key={i} className="break-all font-medium">
+												{h1 || "—"}
+											</li>
+										))}
+									</ul>
+								</div>
+							)}
+							<div className="grid grid-cols-2 gap-2">
+								<ExtractionField
+									label="DOM Elements"
+									value={getNumber(extractions.domElementCount)}
+								/>
+								<ExtractionField
+									label="DOM Depth"
+									value={getNumber(extractions.domDepth)}
+								/>
 							</div>
-						)}
-						<div className="grid grid-cols-2 gap-2">
-							<ExtractionField
-								label="DOM Elements"
-								value={getNumber(extractions.domElementCount)}
-							/>
-							<ExtractionField label="DOM Depth" value={getNumber(extractions.domDepth)} />
-						</div>
-						<div className="grid grid-cols-3 gap-2">
-							<ExtractionField label="Main" value={getNumber(extractions.countMain)} />
-							<ExtractionField
-								label="Articles"
-								value={getNumber(extractions.countArticle)}
-							/>
-							<ExtractionField
-								label="Sections"
-								value={getNumber(extractions.countSection)}
-							/>
-						</div>
-						<div className="grid grid-cols-4 gap-2">
-							<ExtractionField label="H2" value={getNumber(extractions.countH2)} />
-							<ExtractionField label="H3" value={getNumber(extractions.countH3)} />
-							<ExtractionField label="H4" value={getNumber(extractions.countH4)} />
-							<ExtractionField label="P" value={getNumber(extractions.countP)} />
-						</div>
-						<div className="grid grid-cols-2 gap-2">
-							<ExtractionField label="Header" value={getNumber(extractions.countHeader)} />
-							<ExtractionField label="Footer" value={getNumber(extractions.countFooter)} />
-						</div>
-					</ExtractionSection>
+							<div className="grid grid-cols-3 gap-2">
+								<ExtractionField
+									label="Main"
+									value={getNumber(extractions.countMain)}
+								/>
+								<ExtractionField
+									label="Articles"
+									value={getNumber(extractions.countArticle)}
+								/>
+								<ExtractionField
+									label="Sections"
+									value={getNumber(extractions.countSection)}
+								/>
+							</div>
+							<div className="grid grid-cols-4 gap-2">
+								<ExtractionField
+									label="H2"
+									value={getNumber(extractions.countH2)}
+								/>
+								<ExtractionField
+									label="H3"
+									value={getNumber(extractions.countH3)}
+								/>
+								<ExtractionField
+									label="H4"
+									value={getNumber(extractions.countH4)}
+								/>
+								<ExtractionField
+									label="P"
+									value={getNumber(extractions.countP)}
+								/>
+							</div>
+							<div className="grid grid-cols-2 gap-2">
+								<ExtractionField
+									label="Header"
+									value={getNumber(extractions.countHeader)}
+								/>
+								<ExtractionField
+									label="Footer"
+									value={getNumber(extractions.countFooter)}
+								/>
+							</div>
+						</ExtractionSection>
 
-					{/* Open Graph Tags */}
-					{ogTags.length > 0 && (
+						{/* Open Graph Tags */}
+						{ogTags.length > 0 && (
+							<ExtractionSection
+								title={`Open Graph Tags (${ogTags.length})`}
+								icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
+							>
+								{ogTags.map((tag) => (
+									<div key={tag.property} className="flex flex-col gap-0.5">
+										<span className="text-[10px] text-muted-foreground">
+											{tag.property}
+										</span>
+										<span className="break-all font-medium text-xs">
+											{tag.content || "—"}
+										</span>
+									</div>
+								))}
+							</ExtractionSection>
+						)}
+
+						{/* Twitter Cards */}
+						{twitterTags.length > 0 && (
+							<ExtractionSection
+								title={`Twitter Cards (${twitterTags.length})`}
+								icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
+							>
+								{twitterTags.map((tag) => (
+									<div key={tag.name} className="flex flex-col gap-0.5">
+										<span className="text-[10px] text-muted-foreground">
+											{tag.name}
+										</span>
+										<span className="break-all font-medium text-xs">
+											{tag.content || "—"}
+										</span>
+									</div>
+								))}
+							</ExtractionSection>
+						)}
+
+						{/* Accessibility Signals */}
 						<ExtractionSection
-							title={`Open Graph Tags (${ogTags.length})`}
+							title="Accessibility Signals"
 							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
 						>
-							{ogTags.map((tag, i) => (
-								<div key={i} className="flex flex-col gap-0.5">
-									<span className="text-[10px] text-muted-foreground">
-										{tag.property}
-									</span>
-									<span className="text-xs font-medium break-all">
-										{tag.content || "—"}
-									</span>
-								</div>
-							))}
+							<div className="grid grid-cols-2 gap-2">
+								<ExtractionField
+									label="Axe Passes"
+									value={getNumber(extractions.axePasses)}
+								/>
+								<ExtractionField
+									label="Axe Violations"
+									value={getNumber(extractions.axeViolations)}
+								/>
+							</div>
 						</ExtractionSection>
-					)}
 
-					{/* Twitter Cards */}
-					{twitterTags.length > 0 && (
+						{/* Technical Signals */}
 						<ExtractionSection
-							title={`Twitter Cards (${twitterTags.length})`}
+							title="Technical Signals"
 							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
 						>
-							{twitterTags.map((tag, i) => (
-								<div key={i} className="flex flex-col gap-0.5">
-									<span className="text-[10px] text-muted-foreground">
-										{tag.name}
-									</span>
-									<span className="text-xs font-medium break-all">
-										{tag.content || "—"}
-									</span>
-								</div>
-							))}
+							{perfData ? (
+								<>
+									<div className="grid grid-cols-2 gap-2">
+										<ExtractionField
+											label="TTFB (ms)"
+											value={Math.round(perfData.ttfb)}
+										/>
+										<ExtractionField
+											label="DOM Interactive (ms)"
+											value={Math.round(perfData.domInteractive)}
+										/>
+									</div>
+									<div className="grid grid-cols-2 gap-2">
+										<ExtractionField
+											label="First Contentful Paint (ms)"
+											value={Math.round(perfData.fcp)}
+										/>
+										<ExtractionField
+											label="Resource Count"
+											value={perfData.resourceCount}
+										/>
+									</div>
+								</>
+							) : (
+								<p className="text-muted-foreground text-xs">
+									No performance data available
+								</p>
+							)}
 						</ExtractionSection>
-					)}
-
-					{/* Accessibility Signals */}
-					<ExtractionSection
-						title="Accessibility Signals"
-						icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-					>
-						<div className="grid grid-cols-2 gap-2">
-							<ExtractionField
-								label="Axe Passes"
-								value={getNumber(extractions.axePasses)}
-							/>
-							<ExtractionField
-								label="Axe Violations"
-								value={getNumber(extractions.axeViolations)}
-							/>
-						</div>
-					</ExtractionSection>
-
-					{/* Technical Signals */}
-					<ExtractionSection
-						title="Technical Signals"
-						icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-					>
-						{perfData ? (
-							<>
-								<div className="grid grid-cols-2 gap-2">
-									<ExtractionField
-										label="TTFB (ms)"
-										value={Math.round(perfData.ttfb)}
-									/>
-									<ExtractionField
-										label="DOM Interactive (ms)"
-										value={Math.round(perfData.domInteractive)}
-									/>
-								</div>
-								<div className="grid grid-cols-2 gap-2">
-									<ExtractionField
-										label="First Contentful Paint (ms)"
-										value={Math.round(perfData.fcp)}
-									/>
-									<ExtractionField
-										label="Resource Count"
-										value={perfData.resourceCount}
-									/>
-								</div>
-							</>
-						) : (
-							<p className="text-xs text-muted-foreground">
-								No performance data available
-							</p>
-						)}
-					</ExtractionSection>
-				</div>
+					</div>
+				</ScrollArea>
 			)}
 		</div>
 	);

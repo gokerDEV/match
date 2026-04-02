@@ -29,11 +29,13 @@ export const MetricRow: React.FC<MetricRowProps> = ({
 	return (
 		<div className="flex flex-col gap-1 rounded-md border bg-background px-3 py-2">
 			<div className="flex items-center justify-between gap-2">
-				<span className="text-xs font-medium leading-tight">{formatId(id)}</span>
+				<span className="font-medium text-xs leading-tight">
+					{formatId(id)}
+				</span>
 				{value !== null ? (
 					<span
 						className={cn(
-							"shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white",
+							"shrink-0 rounded px-1.5 py-0.5 font-mono font-semibold text-[10px] text-white",
 							scoreColor(value),
 						)}
 					>
@@ -45,7 +47,7 @@ export const MetricRow: React.FC<MetricRowProps> = ({
 					</span>
 				)}
 			</div>
-			<p className="text-[10px] leading-relaxed text-muted-foreground">
+			<p className="text-[10px] text-muted-foreground leading-relaxed">
 				{shortDesc}
 			</p>
 		</div>

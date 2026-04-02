@@ -1,6 +1,6 @@
 import type React from "react";
-import type { Metrics } from "@/lib/types/engine";
 import { metricDescriptions } from "@/lib/engine/plan";
+import type { Metrics } from "@/lib/types/engine";
 import { MetricRow } from "./metric.row";
 
 interface Props {

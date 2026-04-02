@@ -8,11 +8,41 @@ interface HeatmapRowProps {
 }
 
 export const MATCH_COLUMNS = [
-	{ ideal: "#DD4433", heatMax: "#55CCCC", letter: "M", title: "Metadata", short: "Meta" },
-	{ ideal: "#4488FF", heatMax: "#EECC33", letter: "A", title: "Access", short: "Access" },
-	{ ideal: "#FFBB00", heatMax: "#2288CC", letter: "T", title: "Technical", short: "Tech" },
-	{ ideal: "#8844BB", heatMax: "#88AA55", letter: "C", title: "Contextual", short: "Content" },
-	{ ideal: "#11AA55", heatMax: "#993366", letter: "H", title: "Hierarchy", short: "HTML" },
+	{
+		ideal: "#DD4433",
+		heatMax: "#55CCCC",
+		letter: "M",
+		title: "Metadata",
+		short: "Meta",
+	},
+	{
+		ideal: "#4488FF",
+		heatMax: "#EECC33",
+		letter: "A",
+		title: "Access",
+		short: "Access",
+	},
+	{
+		ideal: "#FFBB00",
+		heatMax: "#2288CC",
+		letter: "T",
+		title: "Technical",
+		short: "Tech",
+	},
+	{
+		ideal: "#8844BB",
+		heatMax: "#88AA55",
+		letter: "C",
+		title: "Contextual",
+		short: "Content",
+	},
+	{
+		ideal: "#11AA55",
+		heatMax: "#993366",
+		letter: "H",
+		title: "Hierarchy",
+		short: "HTML",
+	},
 ];
 
 const hexToRgb = (hex: string) => {
@@ -69,7 +99,7 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
 						onClick={isClickable ? () => onColumnClick(col.letter) : undefined}
 						className={[
 							"flex flex-1 flex-col items-center justify-center rounded-sm",
-							"transition-colors duration-500 ease-in-out aspect-square",
+							"aspect-square transition-colors duration-500 ease-in-out",
 							loading ? "animate-heatmap-loading" : "",
 							isClickable
 								? "cursor-pointer hover:brightness-90 active:brightness-75"
@@ -79,13 +109,21 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
 							.join(" ")}
 						style={{
 							backgroundColor: bg,
-							...({ "--color-ideal": col.ideal, "--color-heatmax": col.heatMax } as React.CSSProperties),
+							...({
+								"--color-ideal": col.ideal,
+								"--color-heatmax": col.heatMax,
+							} as React.CSSProperties),
 						}}
-						title={score !== null ? `${col.title}: ${(score * 100).toFixed(0)}%` : col.title}
+						title={
+							score !== null
+								? `${col.title}: ${(score * 100).toFixed(0)}%`
+								: col.title
+						}
 					>
 						<span
-							className={`font-bold text-xl ${loading || score === null ? "text-white/30" : "hidden"
-								}`}
+							className={`font-bold text-xl ${
+								loading || score === null ? "text-white/30" : "hidden"
+							}`}
 						>
 							{col.letter}
 						</span>

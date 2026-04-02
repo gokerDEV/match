@@ -1,6 +1,6 @@
+import { DatabaseIcon, SearchCheckIcon, Settings2Icon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
-import { DatabaseIcon, SearchCheckIcon, Settings2Icon } from "lucide-react";
 import {
 	Sidebar,
 	SidebarContent,
@@ -26,7 +26,6 @@ const VIEW_MAP: Record<string, React.ComponentType> = {
 	settings: SettingsView,
 };
 
-
 // Root component for the side panel entry point.
 // All navigation logic and view routing lives in SidepanelSidebar.
 export const Sidepanel: React.FC = () => {
@@ -40,14 +39,14 @@ export const Sidepanel: React.FC = () => {
 		// already a fixed-width chrome surface.
 		<SidebarProvider
 			open={true}
-			className="h-full flex flex-row-reverse overflow-hidden"
+			className="flex h-full flex-row-reverse overflow-hidden"
 		>
 			<Sidebar
 				side="right"
 				collapsible="none"
-				className="w-10 border-l bg-muted/40 shrink-0"
+				className="w-10 shrink-0 border-l bg-muted/40"
 			>
-				<SidebarContent className="flex flex-col items-center pt-2 gap-1">
+				<SidebarContent className="flex flex-col items-center gap-1 pt-2">
 					<SidebarMenu className="items-center justify-center">
 						{NAV_ITEMS.map(({ id, label, icon: Icon }) => (
 							<SidebarMenuItem key={id}>
@@ -56,7 +55,7 @@ export const Sidepanel: React.FC = () => {
 									isActive={activeId === id}
 									onClick={() => setActiveId(id)}
 									className={cn(
-										"flex flex-col items-center justify-center h-8 w-8 rounded-md p-0",
+										"flex h-8 w-8 flex-col items-center justify-center rounded-md p-0",
 										"data-[active=true]:bg-sidebar-primary/90 data-[active=true]:text-sidebar-primary-foreground!",
 									)}
 									aria-label={label}
@@ -70,7 +69,7 @@ export const Sidepanel: React.FC = () => {
 			</Sidebar>
 
 			{/* ── Main content area — renders the active view ── */}
-			<main className="flex-1 h-full overflow-hidden">
+			<main className="h-full flex-1 overflow-hidden">
 				<ActiveView />
 			</main>
 		</SidebarProvider>

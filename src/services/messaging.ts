@@ -1,6 +1,9 @@
 import type { Extractions, Inputs, Metrics } from "@/lib/types/engine";
 
-export type MessageType = "EXTRACT_SIGNALS" | "RUN_ANALYSIS" | "GET_CACHED_EXTRACTIONS";
+export type MessageType =
+	| "EXTRACT_SIGNALS"
+	| "RUN_ANALYSIS"
+	| "GET_CACHED_EXTRACTIONS";
 
 export interface EXTRACT_SIGNALS_MESSAGE {
 	type: "EXTRACT_SIGNALS";
