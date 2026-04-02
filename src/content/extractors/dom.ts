@@ -1,4 +1,14 @@
 export const extractDomSignals = () => {
+	const currentUrl = new URL(window.location.href);
+	const toAbsoluteUrl = (value: string | null): string | null => {
+		if (!value) return null;
+		try {
+			return new URL(value, currentUrl.href).href;
+		} catch {
+			return null;
+		}
+	};
+
 	const title = document.title || null;
 	const metaDescription =
 		document
@@ -46,6 +56,12 @@ export const extractDomSignals = () => {
 		property: meta.getAttribute("property") || "",
 		content: meta.getAttribute("content") || "",
 	}));
+	const ogImage =
+		toAbsoluteUrl(
+			document
+				.querySelector('meta[property="og:image"]')
+				?.getAttribute("content") || null,
+		) || null;
 
 	const twitterTags = Array.from(
 		document.querySelectorAll('meta[name^="twitter:"]'),
@@ -53,6 +69,59 @@ export const extractDomSignals = () => {
 		name: meta.getAttribute("name") || "",
 		content: meta.getAttribute("content") || "",
 	}));
+	const twitterImage =
+		toAbsoluteUrl(
+			document
+				.querySelector('meta[name="twitter:image"]')
+				?.getAttribute("content") || null,
+		) || null;
+
+	const iconLinks = Array.from(document.querySelectorAll("link[rel][href]"))
+		.filter((link) => {
+			const relValue = (link.getAttribute("rel") || "").toLowerCase();
+			return relValue.includes("icon");
+		})
+		.map((link) => ({
+			rel: link.getAttribute("rel") || "",
+			href: toAbsoluteUrl(link.getAttribute("href")) || "",
+			sizes: link.getAttribute("sizes"),
+			type: link.getAttribute("type"),
+		}))
+		.filter((link) => link.href.length > 0);
+
+	const allAnchors = Array.from(document.querySelectorAll("a[href]"));
+	const seenInternal = new Set<string>();
+	const seenExternal = new Set<string>();
+	const internalLinks: Array<{ href: string; text: string }> = [];
+	const externalLinks: Array<{ href: string; text: string }> = [];
+
+	for (const anchor of allAnchors) {
+		const rawHref = anchor.getAttribute("href");
+		const absoluteHref = toAbsoluteUrl(rawHref);
+		if (!absoluteHref) continue;
+
+		let parsedUrl: URL;
+		try {
+			parsedUrl = new URL(absoluteHref);
+		} catch {
+			continue;
+		}
+
+		const text = (anchor.textContent || "").replace(/\s+/g, " ").trim();
+		const payload = { href: parsedUrl.href, text };
+		const isInternal = parsedUrl.origin === currentUrl.origin;
+
+		if (isInternal) {
+			if (seenInternal.has(parsedUrl.href)) continue;
+			seenInternal.add(parsedUrl.href);
+			internalLinks.push(payload);
+			continue;
+		}
+
+		if (seenExternal.has(parsedUrl.href)) continue;
+		seenExternal.add(parsedUrl.href);
+		externalLinks.push(payload);
+	}
 
 	// The actual content logic. In SSR sites (e.g. Next.js App Router),
 	// <main> might exist but hold zero text (e.g. just a loading spinner SVG),
@@ -84,7 +153,12 @@ export const extractDomSignals = () => {
 		domElementCount,
 		domDepth,
 		ogTags,
+		ogImage,
 		twitterTags,
+		twitterImage,
+		iconLinks,
+		internalLinks,
+		externalLinks,
 		mainText,
 	};
 };

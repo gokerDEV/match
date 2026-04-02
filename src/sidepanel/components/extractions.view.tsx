@@ -2,12 +2,25 @@ import { DatabaseIcon, RefreshCwIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Extractions } from "@/lib/types/engine";
 import type {
 	GET_CACHED_EXTRACTIONS_MESSAGE,
 	GET_CACHED_EXTRACTIONS_RESPONSE,
 } from "@/services/messaging";
+import { AccessibilitySignalsPanel } from "./extraction-panels/accessibility-signals.panel";
+import { DomSignalsPanel } from "./extraction-panels/dom-signals.panel";
+import {
+	getIconItems,
+	getLinkItems,
+	getString,
+	getTagItems,
+} from "./extraction-panels/helpers";
+import { IconsPanel } from "./extraction-panels/icons.panel";
+import { LinksPanel } from "./extraction-panels/links.panel";
+import { OgTagsPanel } from "./extraction-panels/og-tags.panel";
+import { TechnicalSignalsPanel } from "./extraction-panels/technical-signals.panel";
+import { TwitterTagsPanel } from "./extraction-panels/twitter-tags.panel";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
 
@@ -47,58 +60,6 @@ const getCachedExtractions = async (
 	}
 };
 
-// Helper to safely get a string value from Extractions
-const getString = (val: unknown): string | undefined => {
-	if (typeof val === "string") return val;
-	return undefined;
-};
-
-// Helper to safely get a number value from Extractions
-const getNumber = (val: unknown): number | undefined => {
-	if (typeof val === "number") return val;
-	return undefined;
-};
-
-interface ExtractionSectionProps {
-	title: string;
-	icon: React.ReactNode;
-	children: React.ReactNode;
-}
-
-const ExtractionSection: React.FC<ExtractionSectionProps> = ({
-	title,
-	icon,
-	children,
-}) => (
-	<div className="rounded-md border bg-card">
-		<div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
-			{icon}
-			<h3 className="font-semibold text-xs">{title}</h3>
-		</div>
-		<div className="flex flex-col gap-2 p-3">{children}</div>
-	</div>
-);
-
-interface ExtractionFieldProps {
-	label: string;
-	value: string | number | null | undefined;
-}
-
-const ExtractionField: React.FC<ExtractionFieldProps> = ({ label, value }) => {
-	const displayValue =
-		value !== null && value !== undefined && typeof value !== "boolean"
-			? String(value)
-			: "—";
-	return (
-		<div className="flex flex-col gap-0.5">
-			<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-				{label}
-			</span>
-			<span className="break-all font-medium text-xs">{displayValue}</span>
-		</div>
-	);
-};
-
 export const ExtractionsView: React.FC = () => {
 	const [extractions, setExtractions] = useState<Extractions | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -135,23 +96,13 @@ export const ExtractionsView: React.FC = () => {
 		loadExtractions().then();
 	}, [loadExtractions]);
 
-	const ogTags = Array.isArray(extractions?.ogTags)
-		? (extractions.ogTags as Array<{ property: string; content: string }>)
-		: [];
-	const twitterTags = Array.isArray(extractions?.twitterTags)
-		? (extractions.twitterTags as Array<{ name: string; content: string }>)
-		: [];
-	const h1List = Array.isArray(extractions?.h1List)
-		? (extractions.h1List as string[])
-		: [];
-	const perfData = extractions?.performance as
-		| {
-				ttfb: number;
-				domInteractive: number;
-				fcp: number;
-				resourceCount: number;
-		  }
-		| undefined;
+	const ogTags = getTagItems(extractions?.ogTags, "property");
+	const twitterTags = getTagItems(extractions?.twitterTags, "name");
+	const iconLinks = getIconItems(extractions?.iconLinks);
+	const internalLinks = getLinkItems(extractions?.internalLinks);
+	const externalLinks = getLinkItems(extractions?.externalLinks);
+	const ogImage = getString(extractions?.ogImage);
+	const twitterImage = getString(extractions?.twitterImage);
 
 	return (
 		<div className="flex h-full flex-col bg-background">
@@ -213,192 +164,23 @@ export const ExtractionsView: React.FC = () => {
 					</div>
 				)}
 			</div>
+
 			{extractions && (
 				<ScrollArea className="overflow-y-auto">
 					<div className="flex grow flex-col gap-4 p-4">
-						{/* DOM Signals */}
-						<ExtractionSection
-							title="DOM Signals"
-							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-						>
-							<ExtractionField
-								label="Title"
-								value={getString(extractions.title)}
-							/>
-							<ExtractionField
-								label="Meta Description"
-								value={getString(extractions.metaDescription)}
-							/>
-							<ExtractionField
-								label="Canonical URL"
-								value={getString(extractions.canonicalUrl)}
-							/>
-							<ExtractionField
-								label="HTML Lang"
-								value={getString(extractions.htmlLang)}
-							/>
-							<ExtractionField
-								label="Viewport"
-								value={getString(extractions.viewportMeta)}
-							/>
-							{h1List.length > 0 && (
-								<div className="flex flex-col gap-0.5">
-									<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-										H1 Headings ({h1List.length})
-									</span>
-									<ul className="space-y-1 text-xs">
-										{h1List.map((h1, i) => (
-											// biome-ignore lint/suspicious/noArrayIndexKey: single print
-											<li key={i} className="break-all font-medium">
-												{h1 || "—"}
-											</li>
-										))}
-									</ul>
-								</div>
-							)}
-							<div className="grid grid-cols-2 gap-2">
-								<ExtractionField
-									label="DOM Elements"
-									value={getNumber(extractions.domElementCount)}
-								/>
-								<ExtractionField
-									label="DOM Depth"
-									value={getNumber(extractions.domDepth)}
-								/>
-							</div>
-							<div className="grid grid-cols-3 gap-2">
-								<ExtractionField
-									label="Main"
-									value={getNumber(extractions.countMain)}
-								/>
-								<ExtractionField
-									label="Articles"
-									value={getNumber(extractions.countArticle)}
-								/>
-								<ExtractionField
-									label="Sections"
-									value={getNumber(extractions.countSection)}
-								/>
-							</div>
-							<div className="grid grid-cols-4 gap-2">
-								<ExtractionField
-									label="H2"
-									value={getNumber(extractions.countH2)}
-								/>
-								<ExtractionField
-									label="H3"
-									value={getNumber(extractions.countH3)}
-								/>
-								<ExtractionField
-									label="H4"
-									value={getNumber(extractions.countH4)}
-								/>
-								<ExtractionField
-									label="P"
-									value={getNumber(extractions.countP)}
-								/>
-							</div>
-							<div className="grid grid-cols-2 gap-2">
-								<ExtractionField
-									label="Header"
-									value={getNumber(extractions.countHeader)}
-								/>
-								<ExtractionField
-									label="Footer"
-									value={getNumber(extractions.countFooter)}
-								/>
-							</div>
-						</ExtractionSection>
-
-						{/* Open Graph Tags */}
-						{ogTags.length > 0 && (
-							<ExtractionSection
-								title={`Open Graph Tags (${ogTags.length})`}
-								icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-							>
-								{ogTags.map((tag) => (
-									<div key={tag.property} className="flex flex-col gap-0.5">
-										<span className="text-[10px] text-muted-foreground">
-											{tag.property}
-										</span>
-										<span className="break-all font-medium text-xs">
-											{tag.content || "—"}
-										</span>
-									</div>
-								))}
-							</ExtractionSection>
-						)}
-
-						{/* Twitter Cards */}
-						{twitterTags.length > 0 && (
-							<ExtractionSection
-								title={`Twitter Cards (${twitterTags.length})`}
-								icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-							>
-								{twitterTags.map((tag) => (
-									<div key={tag.name} className="flex flex-col gap-0.5">
-										<span className="text-[10px] text-muted-foreground">
-											{tag.name}
-										</span>
-										<span className="break-all font-medium text-xs">
-											{tag.content || "—"}
-										</span>
-									</div>
-								))}
-							</ExtractionSection>
-						)}
-
-						{/* Accessibility Signals */}
-						<ExtractionSection
-							title="Accessibility Signals"
-							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-						>
-							<div className="grid grid-cols-2 gap-2">
-								<ExtractionField
-									label="Axe Passes"
-									value={getNumber(extractions.axePasses)}
-								/>
-								<ExtractionField
-									label="Axe Violations"
-									value={getNumber(extractions.axeViolations)}
-								/>
-							</div>
-						</ExtractionSection>
-
-						{/* Technical Signals */}
-						<ExtractionSection
-							title="Technical Signals"
-							icon={<DatabaseIcon className="size-3 text-muted-foreground" />}
-						>
-							{perfData ? (
-								<>
-									<div className="grid grid-cols-2 gap-2">
-										<ExtractionField
-											label="TTFB (ms)"
-											value={Math.round(perfData.ttfb)}
-										/>
-										<ExtractionField
-											label="DOM Interactive (ms)"
-											value={Math.round(perfData.domInteractive)}
-										/>
-									</div>
-									<div className="grid grid-cols-2 gap-2">
-										<ExtractionField
-											label="First Contentful Paint (ms)"
-											value={Math.round(perfData.fcp)}
-										/>
-										<ExtractionField
-											label="Resource Count"
-											value={perfData.resourceCount}
-										/>
-									</div>
-								</>
-							) : (
-								<p className="text-muted-foreground text-xs">
-									No performance data available
-								</p>
-							)}
-						</ExtractionSection>
+						<IconsPanel icons={iconLinks} />
+						<DomSignalsPanel extractions={extractions} />
+						<OgTagsPanel ogTags={ogTags} ogImage={ogImage} />
+						<TwitterTagsPanel
+							twitterTags={twitterTags}
+							twitterImage={twitterImage}
+						/>
+						<AccessibilitySignalsPanel extractions={extractions} />
+						<TechnicalSignalsPanel extractions={extractions} />
+						<LinksPanel
+							internalLinks={internalLinks}
+							externalLinks={externalLinks}
+						/>
 					</div>
 				</ScrollArea>
 			)}
