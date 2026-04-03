@@ -8,6 +8,8 @@ import type {
 	GET_CACHED_EXTRACTIONS_RESPONSE,
 	PAUSE_DEEP_DIVE_MESSAGE,
 	RESUME_DEEP_DIVE_MESSAGE,
+	RUN_ANALYSIS_MESSAGE,
+	RUN_ANALYSIS_RESPONSE,
 	RUN_DEEP_DIVE_MESSAGE,
 	RUN_DEEP_DIVE_RESPONSE,
 } from "@/services/messaging";
@@ -19,6 +21,35 @@ import type {
 import { getLinkItems } from "@/sidepanel/components/extraction-panels/helpers";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
+const CHECK_VIEW_HYDRATE_KEY = "match_check_view_hydrate";
+
+interface DeepDiveCacheState {
+	initialized: boolean;
+	tabUrl: string;
+	tabId: number | null;
+	rawInternalLinks: LinkInput[];
+	results: DeepDiveResult[];
+	loadingLinks: boolean;
+	running: boolean;
+	paused: boolean;
+	error: string | null;
+	jobId: string | null;
+	removeDuplicateLinks: boolean;
+}
+
+let deepDiveCache: DeepDiveCacheState = {
+	initialized: false,
+	tabUrl: "",
+	tabId: null,
+	rawInternalLinks: [],
+	results: [],
+	loadingLinks: false,
+	running: false,
+	paused: false,
+	error: null,
+	jobId: null,
+	removeDuplicateLinks: true,
+};
 
 const fetchActiveTab = async (): Promise<{
 	tabId: number;
@@ -78,17 +109,53 @@ const toPendingRows = (links: PreparedLink[]): DeepDiveResult[] =>
 		status: "pending",
 	}));
 
+const waitForTabComplete = async (
+	tabId: number,
+	timeoutMs = 20000,
+): Promise<void> => {
+	const tab = await chrome.tabs.get(tabId);
+	if (tab.status === "complete") return;
+
+	await new Promise<void>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			chrome.tabs.onUpdated.removeListener(onUpdated);
+			reject(new Error("Timed out waiting for navigation to complete."));
+		}, timeoutMs);
+
+		const onUpdated = (
+			updatedTabId: number,
+			changeInfo: { status?: string },
+		) => {
+			if (updatedTabId !== tabId) return;
+			if (changeInfo.status !== "complete") return;
+			clearTimeout(timeout);
+			chrome.tabs.onUpdated.removeListener(onUpdated);
+			resolve();
+		};
+
+		chrome.tabs.onUpdated.addListener(onUpdated);
+	});
+};
+
 export const useDeepDive = () => {
-	const [tabUrl, setTabUrl] = useState<string>("");
-	const [tabId, setTabId] = useState<number | null>(null);
-	const [rawInternalLinks, setRawInternalLinks] = useState<LinkInput[]>([]);
-	const [results, setResults] = useState<DeepDiveResult[]>([]);
-	const [loadingLinks, setLoadingLinks] = useState(false);
-	const [running, setRunning] = useState(false);
-	const [paused, setPaused] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [jobId, setJobId] = useState<string | null>(null);
-	const [removeDuplicateLinks, setRemoveDuplicateLinks] = useState(true);
+	const [tabUrl, setTabUrl] = useState<string>(() => deepDiveCache.tabUrl);
+	const [tabId, setTabId] = useState<number | null>(() => deepDiveCache.tabId);
+	const [rawInternalLinks, setRawInternalLinks] = useState<LinkInput[]>(
+		() => deepDiveCache.rawInternalLinks,
+	);
+	const [results, setResults] = useState<DeepDiveResult[]>(
+		() => deepDiveCache.results,
+	);
+	const [loadingLinks, setLoadingLinks] = useState(
+		() => deepDiveCache.loadingLinks,
+	);
+	const [running, setRunning] = useState(() => deepDiveCache.running);
+	const [paused, setPaused] = useState(() => deepDiveCache.paused);
+	const [error, setError] = useState<string | null>(() => deepDiveCache.error);
+	const [jobId, setJobId] = useState<string | null>(() => deepDiveCache.jobId);
+	const [removeDuplicateLinks, setRemoveDuplicateLinks] = useState(
+		() => deepDiveCache.removeDuplicateLinks,
+	);
 
 	const preparedLinks = useMemo<PreparedLink[]>(() => {
 		const normalized = rawInternalLinks
@@ -143,12 +210,16 @@ export const useDeepDive = () => {
 	}, []);
 
 	useEffect(() => {
+		if (deepDiveCache.initialized) return;
+		deepDiveCache.initialized = true;
 		loadInternalLinks().then();
 	}, [loadInternalLinks]);
 
 	useEffect(() => {
+		if (results.length > 0 || running) return;
+		if (preparedLinks.length === 0) return;
 		setResults(toPendingRows(preparedLinks));
-	}, [preparedLinks]);
+	}, [preparedLinks, results.length, running]);
 
 	useEffect(() => {
 		const listener = (
@@ -268,6 +339,64 @@ export const useDeepDive = () => {
 		}
 	}, [paused, preparedLinks, running, tabId]);
 
+	const openRowInCheck = useCallback(async (row: DeepDiveResult) => {
+		if (row.status !== "done") return;
+		try {
+			setError(null);
+			const activeTab = await fetchActiveTab();
+			if (!activeTab) {
+				throw new Error("No active tab found.");
+			}
+
+			await chrome.tabs.update(activeTab.tabId, { url: row.url });
+			await waitForTabComplete(activeTab.tabId);
+
+			const response = await chrome.runtime.sendMessage<
+				RUN_ANALYSIS_MESSAGE,
+				RUN_ANALYSIS_RESPONSE
+			>({
+				type: "RUN_ANALYSIS",
+				payload: {
+					tabId: activeTab.tabId,
+					url: row.url,
+					searchTerm: row.searchTerm,
+					force: false,
+				},
+			});
+
+			if (
+				!response?.success ||
+				!response.scores ||
+				!response.metrics ||
+				!response.inputs
+			) {
+				throw new Error(response?.error || "Failed to open result in Check.");
+			}
+
+			await chrome.storage.session.set({
+				[CHECK_VIEW_HYDRATE_KEY]: {
+					url: row.url,
+					searchTerm: row.searchTerm,
+					scores: response.scores,
+					fullMetrics: response.metrics,
+					fullInputs: response.inputs,
+				},
+			});
+
+			window.dispatchEvent(
+				new CustomEvent("match:navigate-view", {
+					detail: { id: "check" },
+				}),
+			);
+		} catch (err) {
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to open row in Check view.",
+			);
+		}
+	}, []);
+
 	const completedCount = useMemo(
 		() =>
 			results.filter((row) => row.status === "done" || row.status === "error")
@@ -279,6 +408,33 @@ export const useDeepDive = () => {
 		if (results.length === 0) return 0;
 		return Math.round((completedCount / results.length) * 100);
 	}, [completedCount, results.length]);
+
+	useEffect(() => {
+		deepDiveCache = {
+			initialized: true,
+			tabUrl,
+			tabId,
+			rawInternalLinks,
+			results,
+			loadingLinks,
+			running,
+			paused,
+			error,
+			jobId,
+			removeDuplicateLinks,
+		};
+	}, [
+		tabUrl,
+		tabId,
+		rawInternalLinks,
+		results,
+		loadingLinks,
+		running,
+		paused,
+		error,
+		jobId,
+		removeDuplicateLinks,
+	]);
 
 	return {
 		tabUrl,
@@ -295,5 +451,6 @@ export const useDeepDive = () => {
 		progressValue,
 		canPrimaryAction,
 		handlePrimaryAction,
+		openRowInCheck,
 	};
 };

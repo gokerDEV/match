@@ -5,7 +5,7 @@ import {
 	Settings2Icon,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Sidebar,
 	SidebarContent,
@@ -38,6 +38,23 @@ const VIEW_MAP: Record<string, React.ComponentType> = {
 // All navigation logic and view routing lives in SidepanelSidebar.
 export const Sidepanel: React.FC = () => {
 	const [activeId, setActiveId] = useState("check");
+
+	useEffect(() => {
+		const onNavigate = (event: Event) => {
+			const customEvent = event as CustomEvent<{ id?: string }>;
+			const targetId = customEvent.detail?.id;
+			if (!targetId || !(targetId in VIEW_MAP)) return;
+			setActiveId(targetId);
+		};
+
+		window.addEventListener("match:navigate-view", onNavigate as EventListener);
+		return () => {
+			window.removeEventListener(
+				"match:navigate-view",
+				onNavigate as EventListener,
+			);
+		};
+	}, []);
 
 	const ActiveView = VIEW_MAP[activeId] ?? CheckView;
 

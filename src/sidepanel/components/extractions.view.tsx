@@ -24,6 +24,22 @@ import { TwitterTagsPanel } from "./extraction-panels/twitter-tags.panel";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
 
+interface ExtractionsViewCacheState {
+	extractions: Extractions | null;
+	loading: boolean;
+	error: string | null;
+	tabUrl: string;
+	initialized: boolean;
+}
+
+let extractionsViewCache: ExtractionsViewCacheState = {
+	extractions: null,
+	loading: false,
+	error: null,
+	tabUrl: "",
+	initialized: false,
+};
+
 const fetchActiveTab = async (): Promise<{
 	tabId: number;
 	url: string;
@@ -61,10 +77,16 @@ const getCachedExtractions = async (
 };
 
 export const ExtractionsView: React.FC = () => {
-	const [extractions, setExtractions] = useState<Extractions | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [tabUrl, setTabUrl] = useState<string>("");
+	const [extractions, setExtractions] = useState<Extractions | null>(
+		() => extractionsViewCache.extractions,
+	);
+	const [loading, setLoading] = useState(() => extractionsViewCache.loading);
+	const [error, setError] = useState<string | null>(
+		() => extractionsViewCache.error,
+	);
+	const [tabUrl, setTabUrl] = useState<string>(
+		() => extractionsViewCache.tabUrl,
+	);
 
 	const loadExtractions = useCallback(async () => {
 		setLoading(true);
@@ -93,6 +115,17 @@ export const ExtractionsView: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		extractionsViewCache = {
+			extractions,
+			loading,
+			error,
+			tabUrl,
+			initialized: true,
+		};
+	}, [extractions, loading, error, tabUrl]);
+
+	useEffect(() => {
+		if (extractionsViewCache.initialized) return;
 		loadExtractions().then();
 	}, [loadExtractions]);
 
@@ -167,7 +200,7 @@ export const ExtractionsView: React.FC = () => {
 
 			{extractions && (
 				<ScrollArea className="overflow-y-auto">
-					<div className="flex grow flex-col gap-4 p-4">
+					<div className="flex grow flex-col gap-4 p-2 max-w-xs">
 						<IconsPanel icons={iconLinks} />
 						<DomSignalsPanel extractions={extractions} />
 						<OgTagsPanel ogTags={ogTags} ogImage={ogImage} />

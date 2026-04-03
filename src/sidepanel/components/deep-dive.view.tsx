@@ -23,6 +23,7 @@ export const DeepDiveView: React.FC = () => {
 		progressValue,
 		canPrimaryAction,
 		handlePrimaryAction,
+		openRowInCheck,
 	} = useDeepDive();
 
 	return (
@@ -65,7 +66,7 @@ export const DeepDiveView: React.FC = () => {
 							Links
 						</p>
 						<p className="font-medium">
-							Raw: {rawLinksCount} | Ready: {readyLinksCount}
+							{rawLinksCount}/{readyLinksCount}
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
@@ -98,14 +99,19 @@ export const DeepDiveView: React.FC = () => {
 			)}
 
 			<ScrollArea className="overflow-y-auto">
-				<div className="flex flex-col gap-2 p-4 max-w-xs">
+				<div className="flex max-w-xs flex-col gap-2 p-4">
 					{results.length === 0 && (
 						<p className="text-muted-foreground text-xs">
 							No internal links ready.
 						</p>
 					)}
 					{results.map((row, index) => (
-						<DeepDiveRow key={`${row.url}-${index}`} index={index} row={row} />
+						<DeepDiveRow
+							key={`${row.url}-${index}`}
+							index={index}
+							row={row}
+							onOpen={openRowInCheck}
+						/>
 					))}
 				</div>
 			</ScrollArea>

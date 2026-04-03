@@ -21,6 +21,31 @@ import { TechnicalTab } from "./tabs/technical.tab";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const SESSION_TAB_KEY = "match_last_tab_id";
+const CHECK_VIEW_HYDRATE_KEY = "match_check_view_hydrate";
+
+interface CheckViewCacheState {
+	url: string;
+	searchTerm: string;
+	isAnalyzing: boolean;
+	scores: number[] | null;
+	fullMetrics: Metrics | null;
+	fullInputs: Inputs | null;
+	error: string | null;
+	activeTab: string | null;
+	overlayTop: number;
+}
+
+let checkViewCache: CheckViewCacheState = {
+	url: "",
+	searchTerm: "",
+	isAnalyzing: false,
+	scores: null,
+	fullMetrics: null,
+	fullInputs: null,
+	error: null,
+	activeTab: null,
+	overlayTop: 0,
+};
 
 // Maps each MATCH column letter to its detail tab component
 const TAB_COMPONENTS: Record<string, React.FC<{ metrics: Metrics | null }>> = {
@@ -52,26 +77,83 @@ const fetchActiveTab = async (): Promise<{
 // ── Component ──────────────────────────────────────────────────────────────
 
 export const CheckView: React.FC = () => {
-	const [url, setUrl] = useState("");
-	const [searchTerm, setSearchTerm] = useState("");
-	const [isAnalyzing, setIsAnalyzing] = useState(false);
-	const [scores, setScores] = useState<number[] | null>(null);
-	const [fullMetrics, setFullMetrics] = useState<Metrics | null>(null);
-	const [fullInputs, setFullInputs] = useState<Inputs | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	const [url, setUrl] = useState(() => checkViewCache.url);
+	const [searchTerm, setSearchTerm] = useState(() => checkViewCache.searchTerm);
+	const [isAnalyzing, setIsAnalyzing] = useState(
+		() => checkViewCache.isAnalyzing,
+	);
+	const [scores, setScores] = useState<number[] | null>(
+		() => checkViewCache.scores,
+	);
+	const [fullMetrics, setFullMetrics] = useState<Metrics | null>(
+		() => checkViewCache.fullMetrics,
+	);
+	const [fullInputs, setFullInputs] = useState<Inputs | null>(
+		() => checkViewCache.fullInputs,
+	);
+	const [error, setError] = useState<string | null>(() => checkViewCache.error);
 
 	// The letter of the currently open column detail panel (null = closed)
-	const [activeTab, setActiveTab] = useState<string | null>(null);
+	const [activeTab, setActiveTab] = useState<string | null>(
+		() => checkViewCache.activeTab,
+	);
 
 	// Ref to the button row — overlay starts from here
 	const buttonRowRef = useRef<HTMLDivElement>(null);
-	const [overlayTop, setOverlayTop] = useState(0);
+	const [overlayTop, setOverlayTop] = useState(() => checkViewCache.overlayTop);
 
 	useEffect(() => {
-		fetchActiveTab().then((tab) => {
-			if (tab) setUrl(tab.url);
+		if (!checkViewCache.url) {
+			fetchActiveTab().then((tab) => {
+				if (tab) setUrl(tab.url);
+			});
+		}
+
+		chrome.storage.session.get(CHECK_VIEW_HYDRATE_KEY).then((result) => {
+			const payload = result[CHECK_VIEW_HYDRATE_KEY] as
+				| {
+						url?: string;
+						searchTerm?: string;
+						scores?: number[];
+						fullMetrics?: Metrics;
+						fullInputs?: Inputs;
+				  }
+				| undefined;
+
+			if (!payload) return;
+			if (typeof payload.url === "string") setUrl(payload.url);
+			if (typeof payload.searchTerm === "string")
+				setSearchTerm(payload.searchTerm);
+			if (Array.isArray(payload.scores)) setScores(payload.scores);
+			if (payload.fullMetrics) setFullMetrics(payload.fullMetrics);
+			if (payload.fullInputs) setFullInputs(payload.fullInputs);
+			setError(null);
 		});
 	}, []);
+
+	useEffect(() => {
+		checkViewCache = {
+			url,
+			searchTerm,
+			isAnalyzing,
+			scores,
+			fullMetrics,
+			fullInputs,
+			error,
+			activeTab,
+			overlayTop,
+		};
+	}, [
+		url,
+		searchTerm,
+		isAnalyzing,
+		scores,
+		fullMetrics,
+		fullInputs,
+		error,
+		activeTab,
+		overlayTop,
+	]);
 
 	// Recalculate overlay top whenever a tab is opened
 	const handleOpenTab = (letter: string) => {
