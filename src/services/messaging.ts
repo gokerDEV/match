@@ -4,7 +4,11 @@ export type MessageType =
 	| "EXTRACT_SIGNALS"
 	| "RUN_ANALYSIS"
 	| "GET_CACHED_EXTRACTIONS"
-	| "RUN_DEEP_DIVE";
+	| "RUN_DEEP_DIVE"
+	| "PAUSE_DEEP_DIVE"
+	| "RESUME_DEEP_DIVE"
+	| "DEEP_DIVE_PROGRESS"
+	| "DEEP_DIVE_COMPLETE";
 
 export interface EXTRACT_SIGNALS_MESSAGE {
 	type: "EXTRACT_SIGNALS";
@@ -52,19 +56,51 @@ export interface RUN_ANALYSIS_RESPONSE {
 export interface RUN_DEEP_DIVE_MESSAGE {
 	type: "RUN_DEEP_DIVE";
 	payload: {
-		searchTerm?: string;
-		links: string[];
+		tabId: number;
+		links: Array<{
+			href: string;
+			text: string;
+		}>;
 	};
-}
-
-export interface RUN_DEEP_DIVE_ROW {
-	url: string;
-	scores?: number[];
-	error?: string;
 }
 
 export interface RUN_DEEP_DIVE_RESPONSE {
 	success: boolean;
-	rows?: RUN_DEEP_DIVE_ROW[];
+	jobId?: string;
 	error?: string;
+}
+
+export interface PAUSE_DEEP_DIVE_MESSAGE {
+	type: "PAUSE_DEEP_DIVE";
+}
+
+export interface RESUME_DEEP_DIVE_MESSAGE {
+	type: "RESUME_DEEP_DIVE";
+}
+
+export interface DEEP_DIVE_CONTROL_RESPONSE {
+	success: boolean;
+	error?: string;
+}
+
+export interface DEEP_DIVE_PROGRESS_MESSAGE {
+	type: "DEEP_DIVE_PROGRESS";
+	payload: {
+		jobId: string;
+		index: number;
+		total: number;
+		url: string;
+		searchTerm: string;
+		scores?: number[];
+		error?: string;
+	};
+}
+
+export interface DEEP_DIVE_COMPLETE_MESSAGE {
+	type: "DEEP_DIVE_COMPLETE";
+	payload: {
+		jobId: string;
+		total: number;
+		completed: number;
+	};
 }

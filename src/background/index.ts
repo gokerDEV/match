@@ -1,10 +1,15 @@
 import { runMetrics } from "@/lib/engine/plan";
 import type { Extractions, Inputs } from "@/lib/types/engine";
 import type {
+	DEEP_DIVE_COMPLETE_MESSAGE,
+	DEEP_DIVE_CONTROL_RESPONSE,
+	DEEP_DIVE_PROGRESS_MESSAGE,
 	EXTRACT_SIGNALS_MESSAGE,
 	EXTRACT_SIGNALS_RESPONSE,
 	GET_CACHED_EXTRACTIONS_MESSAGE,
 	GET_CACHED_EXTRACTIONS_RESPONSE,
+	PAUSE_DEEP_DIVE_MESSAGE,
+	RESUME_DEEP_DIVE_MESSAGE,
 	RUN_ANALYSIS_MESSAGE,
 	RUN_ANALYSIS_RESPONSE,
 	RUN_DEEP_DIVE_MESSAGE,
@@ -13,6 +18,17 @@ import type {
 import { historyService, settingsService, storage } from "@/services/storage";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
+
+interface DeepDiveJobState {
+	id: string;
+	running: boolean;
+	paused: boolean;
+	cancelled: boolean;
+	completed: number;
+	total: number;
+}
+
+let deepDiveJob: DeepDiveJobState | null = null;
 
 // Persist the last active browser tab ID to session storage.
 // This is the only reliable way for the side panel to know which tab to
@@ -141,24 +157,26 @@ async function waitForTabComplete(
 	});
 }
 
-async function extractFromUrl(url: string): Promise<EXTRACT_SIGNALS_RESPONSE> {
-	const createdTab = await chrome.tabs.create({ url, active: false });
-	if (!createdTab.id) {
-		throw new Error(
-			"Could not create background tab for deep-dive extraction.",
-		);
-	}
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const broadcastDeepDiveMessage = async (
+	message: DEEP_DIVE_PROGRESS_MESSAGE | DEEP_DIVE_COMPLETE_MESSAGE,
+) => {
 	try {
-		await waitForTabComplete(createdTab.id);
-		return await extractFromTab(createdTab.id);
-	} finally {
-		try {
-			await chrome.tabs.remove(createdTab.id);
-		} catch {
-			// ignore tab close failures
-		}
+		await chrome.runtime.sendMessage(message);
+	} catch {
+		// No listener is attached in current extension context.
 	}
+};
+
+async function extractFromExistingTab(
+	tabId: number,
+	url: string,
+): Promise<EXTRACT_SIGNALS_RESPONSE> {
+	await chrome.tabs.update(tabId, { url });
+	await waitForTabComplete(tabId);
+	await sleep(250);
+	return extractFromTab(tabId);
 }
 
 // ── RUN_ANALYSIS handler ──────────────────────────────────────────────────────
@@ -317,79 +335,161 @@ chrome.runtime.onMessage.addListener(
 	(message: RUN_DEEP_DIVE_MESSAGE, _sender, sendResponse) => {
 		if (message.type !== "RUN_DEEP_DIVE") return;
 
+		const links = Array.isArray(message.payload.links)
+			? message.payload.links.filter(
+					(link): link is { href: string; text: string } =>
+						typeof link?.href === "string" &&
+						/^https?:\/\//i.test(link.href) &&
+						typeof link?.text === "string",
+				)
+			: [];
+
+		const tabId = message.payload.tabId;
+		if (!tabId || links.length === 0) {
+			sendResponse({
+				success: false,
+				error: "No valid internal links found for deep-dive.",
+			} as RUN_DEEP_DIVE_RESPONSE);
+			return;
+		}
+
+		if (deepDiveJob?.running) {
+			deepDiveJob.cancelled = true;
+		}
+
+		const jobId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+		const job: DeepDiveJobState = {
+			id: jobId,
+			running: true,
+			paused: false,
+			cancelled: false,
+			completed: 0,
+			total: links.length,
+		};
+		deepDiveJob = job;
+
+		sendResponse({
+			success: true,
+			jobId,
+		} as RUN_DEEP_DIVE_RESPONSE);
+
 		(async () => {
-			try {
-				const searchTerm = message.payload.searchTerm || "";
-				const links = Array.isArray(message.payload.links)
-					? message.payload.links
-							.filter((link): link is string => typeof link === "string")
-							.filter((link) => /^https?:\/\//i.test(link))
-					: [];
-
-				if (links.length === 0) {
-					throw new Error("No valid internal links found for deep-dive.");
+			for (let index = 0; index < links.length; index++) {
+				if (!deepDiveJob || deepDiveJob.id !== jobId || deepDiveJob.cancelled) {
+					break;
 				}
 
-				const rows: Array<{ url: string; scores?: number[]; error?: string }> =
-					[];
+				while (deepDiveJob.paused && !deepDiveJob.cancelled) {
+					await sleep(200);
+				}
+				if (!deepDiveJob || deepDiveJob.id !== jobId || deepDiveJob.cancelled) {
+					break;
+				}
 
-				for (const url of links) {
-					try {
-						const urlHash = storage.hash(url);
-						let extractions = await storage.get<Extractions>(`ext_${urlHash}`);
+				const link = links[index];
+				let scores: number[] | undefined;
+				let error: string | undefined;
 
-						if (!extractions) {
-							const extracted = await extractFromUrl(url);
-							if (!extracted.success || !extracted.data) {
-								throw new Error(
-									extracted.error ?? "Failed to extract target internal link.",
-								);
-							}
-							extractions = extracted.data;
-							await storage.set(`ext_${urlHash}`, extractions);
+				try {
+					const urlHash = storage.hash(link.href);
+					let extractions = await storage.get<Extractions>(`ext_${urlHash}`);
+
+					if (!extractions) {
+						const extracted = await extractFromExistingTab(tabId, link.href);
+						if (!extracted.success || !extracted.data) {
+							throw new Error(
+								extracted.error ?? "Failed to extract target internal link.",
+							);
 						}
-
-						const inputs: Inputs = {
-							url,
-							searchTerm,
-							timestamp: Date.now(),
-						};
-
-						const { metrics: metricsMap } = await runMetrics(
-							extractions,
-							inputs,
-						);
-						const scores = [
-							metricsMap.metadata_precision?.normalized ?? 0,
-							metricsMap.access_quality?.normalized ?? 0,
-							metricsMap.technical_hygiene?.normalized ?? 0,
-							metricsMap.contextual_relevancy?.normalized ?? 0,
-							metricsMap.hierarchy_integrity?.normalized ?? 0,
-						];
-
-						rows.push({ url, scores });
-					} catch (error) {
-						rows.push({
-							url,
-							error:
-								error instanceof Error ? error.message : "Deep-dive run failed",
-						});
+						extractions = extracted.data;
+						await storage.set(`ext_${urlHash}`, extractions);
 					}
+
+					const inputs: Inputs = {
+						url: link.href,
+						searchTerm: link.text,
+						timestamp: Date.now(),
+					};
+
+					const { metrics: metricsMap } = await runMetrics(extractions, inputs);
+					scores = [
+						metricsMap.metadata_precision?.normalized ?? 0,
+						metricsMap.access_quality?.normalized ?? 0,
+						metricsMap.technical_hygiene?.normalized ?? 0,
+						metricsMap.contextual_relevancy?.normalized ?? 0,
+						metricsMap.hierarchy_integrity?.normalized ?? 0,
+					];
+				} catch (runErr) {
+					error =
+						runErr instanceof Error ? runErr.message : "Deep-dive run failed";
 				}
 
-				sendResponse({
-					success: true,
-					rows,
-				} as RUN_DEEP_DIVE_RESPONSE);
-			} catch (error) {
-				sendResponse({
-					success: false,
-					error:
-						error instanceof Error ? error.message : "Failed to run deep-dive",
-				} as RUN_DEEP_DIVE_RESPONSE);
+				if (!deepDiveJob || deepDiveJob.id !== jobId) break;
+				deepDiveJob.completed += 1;
+
+				await broadcastDeepDiveMessage({
+					type: "DEEP_DIVE_PROGRESS",
+					payload: {
+						jobId,
+						index,
+						total: links.length,
+						url: link.href,
+						searchTerm: link.text,
+						scores,
+						error,
+					},
+				});
+			}
+
+			if (deepDiveJob && deepDiveJob.id === jobId) {
+				await broadcastDeepDiveMessage({
+					type: "DEEP_DIVE_COMPLETE",
+					payload: {
+						jobId,
+						total: deepDiveJob.total,
+						completed: deepDiveJob.completed,
+					},
+				});
+				deepDiveJob.running = false;
 			}
 		})();
 
+		return true;
+	},
+);
+
+chrome.runtime.onMessage.addListener(
+	(message: PAUSE_DEEP_DIVE_MESSAGE, _sender, sendResponse) => {
+		if (message.type !== "PAUSE_DEEP_DIVE") return;
+
+		if (!deepDiveJob || !deepDiveJob.running) {
+			sendResponse({
+				success: false,
+				error: "No running deep-dive job.",
+			} as DEEP_DIVE_CONTROL_RESPONSE);
+			return;
+		}
+
+		deepDiveJob.paused = true;
+		sendResponse({ success: true } as DEEP_DIVE_CONTROL_RESPONSE);
+		return true;
+	},
+);
+
+chrome.runtime.onMessage.addListener(
+	(message: RESUME_DEEP_DIVE_MESSAGE, _sender, sendResponse) => {
+		if (message.type !== "RESUME_DEEP_DIVE") return;
+
+		if (!deepDiveJob || !deepDiveJob.running) {
+			sendResponse({
+				success: false,
+				error: "No running deep-dive job.",
+			} as DEEP_DIVE_CONTROL_RESPONSE);
+			return;
+		}
+
+		deepDiveJob.paused = false;
+		sendResponse({ success: true } as DEEP_DIVE_CONTROL_RESPONSE);
 		return true;
 	},
 );

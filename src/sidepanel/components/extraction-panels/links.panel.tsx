@@ -1,6 +1,6 @@
 import { LinkIcon } from "lucide-react";
 import type React from "react";
-// import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { LinkItem } from "./helpers";
 import { ExtractionSection } from "./shared";
 
@@ -12,7 +12,7 @@ interface LinksPanelProps {
 const MAX_RENDERED_LINKS = 100;
 
 const LinksList: React.FC<{ links: LinkItem[] }> = ({ links }) => (
-	// <ScrollArea className="h-44 rounded border bg-muted/20">
+	<ScrollArea className="h-44 rounded border bg-muted/20">
 		<div className="flex flex-col gap-2 p-2">
 			{links.map((link) => (
 				<div key={link.href} className="rounded border bg-background p-2">
@@ -30,7 +30,7 @@ const LinksList: React.FC<{ links: LinkItem[] }> = ({ links }) => (
 				</div>
 			))}
 		</div>
-	// </ScrollArea>
+	</ScrollArea>
 );
 
 export const LinksPanel: React.FC<LinksPanelProps> = ({
