@@ -189,8 +189,8 @@ export const ExtractionsView: React.FC = () => {
 				)}
 
 				{!loading && !extractions && !error && (
-					<div className="flex flex-1 items-center justify-center rounded-md border border-dashed">
-						<div className="flex flex-col items-center gap-2 p-4 text-muted-foreground">
+					<div className="flex flex-1 items-center justify-center rounded-md border border-dashed p-4">
+						<div className="flex flex-col items-center gap-2 m-4 text-muted-foreground">
 							<DatabaseIcon className="size-4" />
 							<p className="text-xs">No data yet</p>
 						</div>
