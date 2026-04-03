@@ -1,4 +1,4 @@
-import { XIcon } from "lucide-react";
+import {DownloadIcon, LayoutDashboardIcon, XIcon} from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { HeatmapRow, MATCH_COLUMNS } from "@/components/common/heatmap.row";
@@ -342,30 +342,6 @@ export const CheckView: React.FC = () => {
 						<strong>Error:</strong> {error}
 					</div>
 				)}
-
-				<div className="flex items-center justify-between border-t pt-2 text-xs">
-					<Button
-						size="xs"
-						onClick={() => {
-							chrome.storage.local.set(
-								{ dashboard_sync: { url, searchTerm, scores } },
-								() => {
-									window.open(chrome.runtime.getURL("app.html"), "_blank");
-								},
-							);
-						}}
-					>
-						Open Dashboard
-					</Button>
-					<Button
-						variant="outline"
-						size="xs"
-						disabled={!scores}
-						onClick={handleDownload}
-					>
-						Download JSON
-					</Button>
-				</div>
 			</ScrollArea>
 
 			{/* ── Detail overlay panel ──
@@ -404,8 +380,34 @@ export const CheckView: React.FC = () => {
 					<ScrollArea className="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5">
 						<ActiveTabComponent metrics={fullMetrics} />
 					</ScrollArea>
+
 				</div>
 			)}
+			<div className='p-4  grid grid-cols-2 gap-2'>
+				<Button
+					size="sm"
+					onClick={() => {
+						chrome.storage.local.set(
+							{ dashboard_sync: { url, searchTerm, scores } },
+							() => {
+								window.open(chrome.runtime.getURL("app.html"), "_blank");
+							},
+						);
+					}}
+				>
+					<LayoutDashboardIcon className="size-3" />
+					<span className="text-xs">Open Dashboard</span>
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!scores}
+					onClick={handleDownload}
+				>
+					<DownloadIcon className="size-3" />
+					<span className="text-xs">Download JSON</span>
+				</Button>
+			</div>
 		</div>
 	);
 };

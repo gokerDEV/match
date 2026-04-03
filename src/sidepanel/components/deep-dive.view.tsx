@@ -1,4 +1,4 @@
-import { PauseIcon, PlayIcon, RadarIcon } from "lucide-react";
+import { DownloadIcon, PauseIcon, PlayIcon, RadarIcon } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,6 +24,10 @@ export const DeepDiveView: React.FC = () => {
 		canPrimaryAction,
 		handlePrimaryAction,
 		openRowInCheck,
+		exportingResults,
+		exportingExtractions,
+		handleDownloadResults,
+		handleDownloadExtractions,
 	} = useDeepDive();
 
 	return (
@@ -38,25 +42,27 @@ export const DeepDiveView: React.FC = () => {
 						</p>
 					)}
 				</div>
-				<Button
-					size="sm"
-					onClick={handlePrimaryAction}
-					disabled={!canPrimaryAction}
-					className="h-8 gap-1"
-				>
-					{running ? (
-						paused ? (
-							<PlayIcon className="size-3" />
+				<div className="flex items-center gap-2">
+					<Button
+						size="sm"
+						onClick={handlePrimaryAction}
+						disabled={!canPrimaryAction}
+						className="h-8 gap-1"
+					>
+						{running ? (
+							paused ? (
+								<PlayIcon className="size-3" />
+							) : (
+								<PauseIcon className="size-3" />
+							)
 						) : (
-							<PauseIcon className="size-3" />
-						)
-					) : (
-						<RadarIcon className="size-3" />
-					)}
-					<span className="text-xs">
-						{running ? (paused ? "Resume" : "Pause") : "Start"}
-					</span>
-				</Button>
+							<RadarIcon className="size-3" />
+						)}
+						<span className="text-xs">
+							{running ? (paused ? "Resume" : "Pause") : "Start"}
+						</span>
+					</Button>
+				</div>
 			</div>
 
 			<div className="mx-2.5 rounded-md border bg-muted/40 px-3 py-2">
@@ -115,6 +121,28 @@ export const DeepDiveView: React.FC = () => {
 					))}
 				</div>
 			</ScrollArea>
+			<div className='p-2.5  grid grid-cols-2 gap-2'>
+				<Button
+					size="sm"
+					variant="outline"
+					onClick={handleDownloadResults}
+					disabled={results.length === 0 || exportingResults}
+					className="h-8 gap-1"
+				>
+					<DownloadIcon className="size-3" />
+					<span className="text-xs">Results JSON</span>
+				</Button>
+				<Button
+					size="sm"
+					variant="outline"
+					onClick={handleDownloadExtractions}
+					disabled={results.length === 0 || exportingExtractions}
+					className="h-8 gap-1"
+				>
+					<DownloadIcon className="size-3" />
+					<span className="text-xs">Extractions JSON</span>
+				</Button>
+			</div>
 		</div>
 	);
 };

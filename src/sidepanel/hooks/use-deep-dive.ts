@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { metricDescriptions } from "@/lib/engine/plan";
 import type { Extractions } from "@/lib/types/engine";
 import type {
 	DEEP_DIVE_COMPLETE_MESSAGE,
@@ -156,6 +157,8 @@ export const useDeepDive = () => {
 	const [removeDuplicateLinks, setRemoveDuplicateLinks] = useState(
 		() => deepDiveCache.removeDuplicateLinks,
 	);
+	const [exportingResults, setExportingResults] = useState(false);
+	const [exportingExtractions, setExportingExtractions] = useState(false);
 
 	const preparedLinks = useMemo<PreparedLink[]>(() => {
 		const normalized = rawInternalLinks
@@ -241,6 +244,8 @@ export const useDeepDive = () => {
 						scores: Array.isArray(message.payload.scores)
 							? message.payload.scores
 							: null,
+						inputs: message.payload.inputs,
+						metrics: message.payload.metrics,
 						error: message.payload.error,
 						status: message.payload.error ? "error" : "done",
 					};
@@ -409,6 +414,79 @@ export const useDeepDive = () => {
 		return Math.round((completedCount / results.length) * 100);
 	}, [completedCount, results.length]);
 
+	const handleDownloadResults = useCallback(async () => {
+		try {
+			setExportingResults(true);
+			const report = {
+				description:
+					"Deep Dive MATCH report. Each result item includes inputs and metrics for one internal link.",
+				metricDescriptions,
+				results: results.map((row) => ({
+					inputs: row.inputs ?? {
+						url: row.url,
+						searchTerm: row.searchTerm,
+						timestamp: 0,
+					},
+					metrics: row.metrics ?? {},
+					scores: row.scores ?? [],
+					status: row.status,
+					error: row.error,
+				})),
+			};
+			const json = JSON.stringify(report, null, 2);
+			const blob = new Blob([json], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			await chrome.downloads.download({
+				url,
+				filename: `match-deep-dive-results-${Date.now()}.json`,
+				saveAs: true,
+			});
+			URL.revokeObjectURL(url);
+		} catch (err) {
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to export deep-dive results.",
+			);
+		} finally {
+			setExportingResults(false);
+		}
+	}, [results]);
+
+	const handleDownloadExtractions = useCallback(async () => {
+		try {
+			setExportingExtractions(true);
+			const payload = await Promise.all(
+				results.map(async (row) => ({
+					url: row.url,
+					searchTerm: row.searchTerm,
+					status: row.status,
+					scores: row.scores,
+					error: row.error,
+					extractions: await getCachedExtractions(row.url),
+				})),
+			);
+
+			const json = JSON.stringify(payload, null, 2);
+			const blob = new Blob([json], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			await chrome.downloads.download({
+				url,
+				filename: `match-deep-dive-extractions-${Date.now()}.json`,
+				saveAs: true,
+			});
+			URL.revokeObjectURL(url);
+		} catch (err) {
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to export deep-dive extractions.",
+			);
+		} finally {
+			setExportingExtractions(false);
+		}
+	}, [results]);
+
 	useEffect(() => {
 		deepDiveCache = {
 			initialized: true,
@@ -452,5 +530,9 @@ export const useDeepDive = () => {
 		canPrimaryAction,
 		handlePrimaryAction,
 		openRowInCheck,
+		exportingResults,
+		exportingExtractions,
+		handleDownloadResults,
+		handleDownloadExtractions,
 	};
 };

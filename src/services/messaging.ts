@@ -92,6 +92,8 @@ export interface DEEP_DIVE_PROGRESS_MESSAGE {
 		url: string;
 		searchTerm: string;
 		scores?: number[];
+		inputs?: Inputs;
+		metrics?: Metrics;
 		error?: string;
 	};
 }

@@ -1,4 +1,4 @@
-import { DatabaseIcon, RefreshCwIcon } from "lucide-react";
+import { DatabaseIcon, DownloadIcon, RefreshCwIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -137,6 +137,19 @@ export const ExtractionsView: React.FC = () => {
 	const ogImage = getString(extractions?.ogImage);
 	const twitterImage = getString(extractions?.twitterImage);
 
+	const handleDownload = async () => {
+		if (!extractions) return;
+		const json = JSON.stringify(extractions, null, 2);
+		const blob = new Blob([json], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		await chrome.downloads.download({
+			url,
+			filename: `match-extraction-${Date.now()}.json`,
+			saveAs: true,
+		});
+		URL.revokeObjectURL(url);
+	};
+
 	return (
 		<div className="relative flex h-full grow flex-col overflow-hidden bg-background">
 			<div className="m-4 flex items-center justify-between">
@@ -146,18 +159,20 @@ export const ExtractionsView: React.FC = () => {
 						Raw signals extracted from the active page
 					</p>
 				</div>
-				<Button
-					size="sm"
-					variant="outline"
-					onClick={loadExtractions}
-					disabled={loading}
-					className="h-8 gap-1"
-				>
-					<RefreshCwIcon
-						className={`size-3 ${loading ? "animate-spin" : ""}`}
-					/>
-					<span className="text-xs">Refresh</span>
-				</Button>
+				<div className="flex items-center gap-2">
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={loadExtractions}
+						disabled={loading}
+						className="h-8 gap-1"
+					>
+						<RefreshCwIcon
+							className={`size-3 ${loading ? "animate-spin" : ""}`}
+						/>
+						<span className="text-xs">Refresh</span>
+					</Button>
+				</div>
 			</div>
 
 			<div className="mx-2">
@@ -190,7 +205,7 @@ export const ExtractionsView: React.FC = () => {
 
 				{!loading && !extractions && !error && (
 					<div className="flex flex-1 items-center justify-center rounded-md border border-dashed p-4">
-						<div className="flex flex-col items-center gap-2 m-4 text-muted-foreground">
+						<div className="m-4 flex flex-col items-center gap-2 text-muted-foreground">
 							<DatabaseIcon className="size-4" />
 							<p className="text-xs">No data yet</p>
 						</div>
@@ -217,6 +232,19 @@ export const ExtractionsView: React.FC = () => {
 					</div>
 				</ScrollArea>
 			)}
+
+			<div className='p-2.5  grid grid-cols-1 gap-2'>
+				<Button
+					size="sm"
+					variant="outline"
+					onClick={handleDownload}
+					disabled={!extractions}
+					className="h-8 gap-1"
+				>
+					<DownloadIcon className="size-3" />
+					<span className="text-xs">Download JSON</span>
+				</Button>
+			</div>
 		</div>
 	);
 };

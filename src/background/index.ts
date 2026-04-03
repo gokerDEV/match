@@ -388,6 +388,12 @@ chrome.runtime.onMessage.addListener(
 
 				const link = links[index];
 				let scores: number[] | undefined;
+				let inputs: Inputs | undefined;
+				let metrics:
+					| {
+							[metricId: string]: { normalized: number; raw: number };
+					  }
+					| undefined;
 				let error: string | undefined;
 
 				try {
@@ -405,13 +411,14 @@ chrome.runtime.onMessage.addListener(
 						await storage.set(`ext_${urlHash}`, extractions);
 					}
 
-					const inputs: Inputs = {
+					inputs = {
 						url: link.href,
 						searchTerm: link.text,
 						timestamp: Date.now(),
 					};
 
 					const { metrics: metricsMap } = await runMetrics(extractions, inputs);
+					metrics = metricsMap;
 					scores = [
 						metricsMap.metadata_precision?.normalized ?? 0,
 						metricsMap.access_quality?.normalized ?? 0,
@@ -436,6 +443,8 @@ chrome.runtime.onMessage.addListener(
 						url: link.href,
 						searchTerm: link.text,
 						scores,
+						inputs,
+						metrics,
 						error,
 					},
 				});
