@@ -11,23 +11,23 @@ interface LinksPanelProps {
 const MAX_RENDERED_LINKS = 100;
 
 const LinksList: React.FC<{ links: LinkItem[] }> = ({ links }) => (
-		<div className="flex flex-col gap-1">
-			{links.map((link) => (
-				<div key={link.href} className="rounded border bg-background p-2">
-					<p className="truncate font-medium text-xs">
-						{link.text || "(no anchor text)"}
-					</p>
-					<a
-						href={link.href}
-						target="_blank"
-						rel="noreferrer"
-						className="block break-all text-[10px] text-muted-foreground hover:underline"
-					>
-						{link.href}
-					</a>
-				</div>
-			))}
-		</div>
+	<div className="flex flex-col gap-1">
+		{links.map((link) => (
+			<div key={link.href} className="rounded border bg-background p-2">
+				<p className="truncate font-medium text-xs">
+					{link.text || "(no anchor text)"}
+				</p>
+				<a
+					href={link.href}
+					target="_blank"
+					rel="noreferrer"
+					className="block break-all text-[10px] text-muted-foreground hover:underline"
+				>
+					{link.href}
+				</a>
+			</div>
+		))}
+	</div>
 );
 
 export const LinksPanel: React.FC<LinksPanelProps> = ({
@@ -60,7 +60,7 @@ export const LinksPanel: React.FC<LinksPanelProps> = ({
 					)}
 				</div>
 
-				<div className="flex flex-col gap-1">
+				<div className="flex w-full flex-col gap-1 overflow-auto">
 					<span className="text-[10px] text-muted-foreground uppercase tracking-wide">
 						External Links ({externalLinks.length})
 					</span>

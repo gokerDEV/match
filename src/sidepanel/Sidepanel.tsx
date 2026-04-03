@@ -94,7 +94,7 @@ export const Sidepanel: React.FC = () => {
 			</Sidebar>
 
 			{/* ── Main content area — renders the active view ── */}
-			<main className="h-full flex-1 overflow-hidden">
+			<main className="h-full w-full max-w-xs">
 				<ActiveView />
 			</main>
 		</SidebarProvider>

@@ -5,6 +5,7 @@ import { HeatmapRow, MATCH_COLUMNS } from "@/components/common/heatmap.row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { generateReport } from "@/lib/report.utils";
 import type { Inputs, Metrics } from "@/lib/types/engine";
 import { cn } from "@/lib/utils";
@@ -253,11 +254,11 @@ export const CheckView: React.FC = () => {
 	const ActiveTabComponent = activeTab ? TAB_COMPONENTS[activeTab] : null;
 
 	return (
-		<div className="relative flex h-full flex-col overflow-hidden bg-background">
+		<div className="relative flex h-full grow flex-col overflow-hidden bg-background">
 			{/* ── Main scrollable content ── */}
-			<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+			<ScrollArea className="overflow-y-auto p-4">
 				{/* Heatmap + clickable column headers */}
-				<div className="mt-2 flex flex-col gap-2">
+				<div className="mt-2 flex w-full flex-col gap-2">
 					<div className="grid grid-cols-5 gap-1 text-center font-bold text-[8px] text-muted-foreground uppercase tracking-wider">
 						{MATCH_COLUMNS.map((col) => (
 							<button
@@ -289,8 +290,8 @@ export const CheckView: React.FC = () => {
 				</div>
 
 				{/* Analysis form */}
-				<form onSubmit={handleAnalyze} className="flex flex-col gap-4">
-					<div className="flex flex-col gap-2">
+				<form onSubmit={handleAnalyze} className="mt-2 flex flex-col gap-2">
+					<div className="flex flex-col gap-1">
 						<Label
 							htmlFor="url-input"
 							className="text-muted-foreground text-xs"
@@ -305,7 +306,7 @@ export const CheckView: React.FC = () => {
 							className="bg-muted/50 text-xs"
 						/>
 					</div>
-					<div className="flex flex-col gap-2">
+					<div className="flex flex-col gap-1">
 						<Label
 							htmlFor="search-input"
 							className="text-muted-foreground text-xs"
@@ -365,7 +366,7 @@ export const CheckView: React.FC = () => {
 						Download JSON
 					</Button>
 				</div>
-			</div>
+			</ScrollArea>
 
 			{/* ── Detail overlay panel ──
 			    Starts from the top of the "Start Analysis" button row and fills
@@ -400,9 +401,9 @@ export const CheckView: React.FC = () => {
 					</div>
 
 					{/* Scrollable metric list */}
-					<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
+					<ScrollArea className="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5">
 						<ActiveTabComponent metrics={fullMetrics} />
-					</div>
+					</ScrollArea>
 				</div>
 			)}
 		</div>

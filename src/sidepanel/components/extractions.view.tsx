@@ -138,7 +138,7 @@ export const ExtractionsView: React.FC = () => {
 	const twitterImage = getString(extractions?.twitterImage);
 
 	return (
-		<div className="flex h-full flex-col bg-background">
+		<div className="relative flex h-full grow flex-col overflow-hidden bg-background">
 			<div className="m-4 flex items-center justify-between">
 				<div className="flex flex-col gap-1">
 					<h2 className="font-semibold text-sm">Extractions</h2>
@@ -160,7 +160,7 @@ export const ExtractionsView: React.FC = () => {
 				</Button>
 			</div>
 
-			<div className="mx-4">
+			<div className="mx-2">
 				{tabUrl && (
 					<div className="rounded-md border bg-muted/40 px-3 py-2">
 						<span className="text-[10px] text-muted-foreground uppercase">
@@ -190,7 +190,7 @@ export const ExtractionsView: React.FC = () => {
 
 				{!loading && !extractions && !error && (
 					<div className="flex flex-1 items-center justify-center rounded-md border border-dashed">
-						<div className="flex flex-col items-center gap-2 text-muted-foreground">
+						<div className="flex flex-col items-center gap-2 p-4 text-muted-foreground">
 							<DatabaseIcon className="size-4" />
 							<p className="text-xs">No data yet</p>
 						</div>
@@ -200,7 +200,7 @@ export const ExtractionsView: React.FC = () => {
 
 			{extractions && (
 				<ScrollArea className="overflow-y-auto">
-					<div className="flex grow flex-col gap-4 p-2 max-w-xs">
+					<div className="flex flex-col gap-4 p-2.5">
 						<IconsPanel icons={iconLinks} />
 						<DomSignalsPanel extractions={extractions} />
 						<OgTagsPanel ogTags={ogTags} ogImage={ogImage} />

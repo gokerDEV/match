@@ -59,7 +59,7 @@ export const DeepDiveView: React.FC = () => {
 				</Button>
 			</div>
 
-			<div className="mx-4 rounded-md border bg-muted/40 px-3 py-2">
+			<div className="mx-2.5 rounded-md border bg-muted/40 px-3 py-2">
 				<div className="flex items-center justify-between gap-2">
 					<div className="text-xs">
 						<p className="text-[10px] text-muted-foreground uppercase tracking-wide">
@@ -82,7 +82,7 @@ export const DeepDiveView: React.FC = () => {
 				</div>
 			</div>
 
-			<div className="mx-4 mt-3 rounded-md border bg-card px-3 py-2">
+			<div className="mx-2.5 mt-1 rounded-md border bg-card px-3 py-2">
 				<div className="mb-2 flex items-center justify-between">
 					<p className="text-xs">
 						Completed: {completedCount}/{totalCount}
@@ -99,7 +99,7 @@ export const DeepDiveView: React.FC = () => {
 			)}
 
 			<ScrollArea className="overflow-y-auto">
-				<div className="flex max-w-xs flex-col gap-2 p-4">
+				<div className="flex min-w-0 flex-col gap-2 p-2.5">
 					{results.length === 0 && (
 						<p className="text-muted-foreground text-xs">
 							No internal links ready.

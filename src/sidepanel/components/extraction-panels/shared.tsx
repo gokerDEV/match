@@ -16,7 +16,7 @@ export const ExtractionSection: React.FC<ExtractionSectionProps> = ({
 			{icon}
 			<h3 className="font-semibold text-xs">{title}</h3>
 		</div>
-		<div className="flex flex-col gap-2 p-3">{children}</div>
+		<div className="flex flex-col gap-2 p-2">{children}</div>
 	</div>
 );
 

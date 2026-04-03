@@ -2,7 +2,7 @@ import type React from "react";
 
 export const SettingsView: React.FC = () => {
 	return (
-		<div className="flex h-full flex-col gap-4 bg-background p-4">
+		<div className="flex h-full flex-col gap-4 bg-background p-2">
 			<div className="flex flex-col gap-1">
 				<h2 className="font-semibold text-sm">Settings</h2>
 				<p className="text-muted-foreground text-xs">
