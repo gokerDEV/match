@@ -36,7 +36,7 @@ export const CrawlingView: React.FC = () => {
 
 	return (
 		<div className="flex h-full flex-col bg-background">
-			<div className="m-2 flex items-start justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2">
+			<div className="m-2 flex items-start justify-between gap-2  p-4">
 				<div className="flex min-w-0 flex-col gap-1">
 					<h2 className="font-semibold text-sm">Crawling</h2>
 					<p className="truncate text-[10px] text-muted-foreground">
@@ -66,6 +66,7 @@ export const CrawlingView: React.FC = () => {
 					id="crawl-csv-input"
 					type="file"
 					accept=".csv,text/csv"
+					className='text-xs text-muted'
 					onChange={(event) => {
 						const file = event.target.files?.[0];
 						if (!file) return;
@@ -79,6 +80,7 @@ export const CrawlingView: React.FC = () => {
 							Batch Size
 						</span>
 						<Input
+							className='text-sm'
 							type="number"
 							min={1}
 							value={batchSize}
@@ -95,6 +97,7 @@ export const CrawlingView: React.FC = () => {
 							Sleep (ms) after batch
 						</span>
 						<Input
+							className='text-sm'
 							type="number"
 							min={0}
 							value={sleepMs}
@@ -109,7 +112,7 @@ export const CrawlingView: React.FC = () => {
 				</div>
 			</div>
 
-			<div className="mx-2 mt-2 rounded-md border bg-card px-3 py-2">
+			<div className="mx-2.5 mt-2 rounded-md border bg-card px-3 py-2">
 				<div className="mb-2 flex items-center justify-between">
 					<p className="text-xs">
 						Completed: {completedCount}/{totalCount}
@@ -120,13 +123,13 @@ export const CrawlingView: React.FC = () => {
 			</div>
 
 			{error && (
-				<div className="mx-2 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
+				<div className="mx-2.5 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
 					<p className="text-destructive text-xs">{error}</p>
 				</div>
 			)}
 
-			<ScrollArea className="mt-2 overflow-y-auto">
-				<div className="flex min-w-0 flex-col gap-2 p-2">
+			<ScrollArea className="overflow-y-auto">
+				<div className="flex min-w-0 flex-col gap-2 p-2.5">
 					{selectedBatchIndex === null && (
 						<>
 							{batches.length === 0 && (
@@ -138,7 +141,8 @@ export const CrawlingView: React.FC = () => {
 							{batches.map((batch) => (
 								<div
 									key={batch.index}
-									className="rounded-md border bg-card p-2"
+									className="rounded-md border bg-card p-2.5"
+									onClick={() => setSelectedBatchIndex(batch.index)}
 								>
 									<div className="flex items-start justify-between gap-2">
 										<div>
@@ -159,19 +163,13 @@ export const CrawlingView: React.FC = () => {
 										Completed: {batch.completedCount}/{batch.items.length}
 									</p>
 
-									<div className="mt-2 flex flex-wrap gap-2">
-										<Button
-											size="xs"
-											variant="outline"
-											onClick={() => setSelectedBatchIndex(batch.index)}
-										>
-											View
-										</Button>
+									<div className="mt-2 grid  grid-cols-2 gap-2">
 										<Button
 											size="xs"
 											variant="outline"
 											disabled={batch.status !== "completed"}
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation();
 												downloadBatchScores(batch.index).then();
 											}}
 											className="gap-1"
@@ -183,7 +181,8 @@ export const CrawlingView: React.FC = () => {
 											size="xs"
 											variant="outline"
 											disabled={batch.status !== "completed"}
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation();
 												downloadBatchExtractions(batch.index).then();
 											}}
 											className="gap-1"
