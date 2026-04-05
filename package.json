@@ -3,7 +3,7 @@
 	"description": "Web Quality Linter",
 	"license": "MIT",
 	"private": true,
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"type": "module",
 	"author": "goker <https://goker.dev>",
 	"repository": {

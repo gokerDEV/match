@@ -11,6 +11,7 @@ MATCH answers: "Is what MUST exist present, and is it correct?"
 This repository will deliver:
 1) A Chrome Extension (Manifest V3) with:
    - Popup (quick check on current tab)
+   - Sidepanel (check, extraction, deep-dive, crawling workflows)
    - Dashboard (advanced multi-run + history)
 2) A deterministic scoring engine:
    - Metric registry (plugins)
@@ -174,6 +175,35 @@ Dashboard supports advanced usage.
   - Clean History
   - Delete a single record
 
+### 5.3 Sidepanel (Operational Console)
+The sidepanel is the power-user analysis surface inside the browser.
+
+**Views**
+- **Check**: Runs MATCH on active tab and provides per-column detail panels.
+- **Extraction**: Displays cached extraction signals for active tab.
+- **Deep Dive**: Runs MATCH sequentially over internal links of active page.
+- **Crawling**: Runs MATCH in batches from CSV input.
+
+**Deep Dive Requirements**
+- Internal links are prepared from cached extraction data.
+- Links must be normalized and de-duplicated when "remove duplicate links" is enabled (default: true).
+- A default max-link cap MUST be applied (default: 100).
+- Search term for each internal link should use extracted link text; if missing, fallback from URL path; if still missing, use empty string.
+- Start button toggles into pause/resume state while running.
+- Progress must update incrementally per finished link.
+- Completed rows must be openable and hydrate Check view for the clicked row.
+- Deep-dive state must persist across sidepanel view navigation until a new start action.
+
+**Crawling Requirements**
+- Input CSV format: `id, search term, url`.
+- Batch size and sleep duration between batches are configurable.
+- Start button toggles into pause/resume state while running.
+- Progress must update incrementally per processed row.
+- Each row result must preserve and expose its source `id`.
+- Completed batch artifacts (scores and extractions) must be persisted and downloadable per batch.
+- Completed row items must be openable and hydrate Check view for the clicked row.
+- Crawling state must persist across sidepanel view navigation until a new session/file load.
+
 ---
 
 ## 6. Engine Architecture
@@ -324,6 +354,12 @@ Minimum recommended extraction keys (v1):
 - `links: Array<{ href: string; text: string }>`
 - `images: Array<{ src: string; alt: string | null }>`
 
+For extraction link text quality, collectors should use fallback fields when visible anchor text is empty:
+- `aria-label`
+- `title`
+- child image `alt`
+- icon/svg title text
+
 Technical hygiene signals are optional by mode (see below).
 
 ### 7.5 Technical Hygiene Signals (Strict but Optional Permission)
@@ -428,6 +464,17 @@ Batch export must wrap multiple runs:
 ```json
 { "runs": [ ...singleRunReport ] }
 ```
+
+### 10.3 Sidepanel Export Artifacts
+- **Extraction View Export**: Raw extraction JSON for active URL.
+- **Deep Dive Results Export**:
+  - `description`
+  - `metricDescriptions`
+  - `results[]` where each item includes `inputs`, `metrics`, `scores`, `status`, `error`.
+- **Deep Dive Extractions Export**:
+  - Array of `{ url, searchTerm, status, scores, error, extractions }`.
+- **Crawling Batch Exports**:
+  - Scores JSON and Extractions JSON downloadable per completed batch.
 
 ---
 

@@ -1,6 +1,6 @@
 # MATCH
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) 
+![Version](https://img.shields.io/badge/version-1.0.1-blue) ![License](https://img.shields.io/badge/license-MIT-green) 
 <!-- ![Chrome Web Store](https://img.shields.io/chrome-web-store/v/fgggldjlbpajaffefpkkhkfdiihinebf) -->
 
 <img src="public/banner.svg" width="400" alt="MATCH" style="padding-bottom: 10px;" />
@@ -56,9 +56,15 @@
 *   **0-Cost & Local First**: AI and logic run wholly on your machine via WebAssembly and Chrome's Built-in AI. No remote API calls.
 *   **Contextual Relevancy Check**: Compare the actual layout text against a real Search Term.
 *   **A11y Baseline**: Deterministic Accessibility checks powered by axe-core.
+*   **Sidepanel Workflows (Power User)**:
+    *   **Check View**: Active-tab MATCH analysis with per-column detail tabs and JSON report export.
+    *   **Extraction View**: Full extracted signal browser with grouped Internal/External links (counts + first 100 rendered), OG/Twitter image thumbnails, favicon/icon previews, and JSON download.
+    *   **Deep Dive View**: Internal-link MATCH crawl in active tab with start/pause/resume, progress bar, duplicate-link removal switch (default on), max-link cap (default 100), row-level open-in-check action, and JSON exports for results + extractions.
+    *   **Crawling View (CSV)**: Batch processing for `id, search term, url` lists with configurable batch size/sleep, start/pause/resume flow, batch-level persistent export files (scores + extractions), progress tracking, and row-level open-in-check action.
 *   **Multiple Modes**:
     *   **Popup**: Instant analysis for the active tab.
     *   **Dashboard**: Batch URL analysis and historical cache tracking.
+    *   **Sidepanel**: In-browser analysis console for extraction/deep-dive/crawling workflows.
 *   **JSON Report Export**: Agent/AI-friendly export artifact.
 
 ## Tech Stack
@@ -89,9 +95,11 @@
 src/
 ├── app/                # Feature modules (Dashboard, Popup logic)
 ├── components/         # Shared UI components (Shadcn, Common)
+├── content/            # Content-side extraction logic injected into pages
 ├── lib/                # Shared utilities
 ├── metrics/            # Deterministic metric plugins (M.A.T.C.H.)
 ├── services/           # External integrations (Chrome API, Storage, AI)
+├── sidepanel/          # Extension sidepanel views, hooks and orchestration
 ├── assets/             # Static assets
 └── popup/              # Extension popup entry
 ```
