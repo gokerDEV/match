@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { hydrateAndOpenCheckView } from "@/lib/check-view.helpers";
 import { metricDescriptions } from "@/lib/engine/plan";
+import { getLinkItems } from "@/lib/extraction.helpers";
 import type { Extractions } from "@/lib/types/engine";
 import type {
 	DEEP_DIVE_COMPLETE_MESSAGE,
@@ -9,8 +11,6 @@ import type {
 	GET_CACHED_EXTRACTIONS_RESPONSE,
 	PAUSE_DEEP_DIVE_MESSAGE,
 	RESUME_DEEP_DIVE_MESSAGE,
-	RUN_ANALYSIS_MESSAGE,
-	RUN_ANALYSIS_RESPONSE,
 	RUN_DEEP_DIVE_MESSAGE,
 	RUN_DEEP_DIVE_RESPONSE,
 } from "@/services/messaging";
@@ -18,11 +18,10 @@ import type {
 	DeepDiveResult,
 	LinkInput,
 	PreparedLink,
-} from "@/sidepanel/components/deep-dive/types";
-import { getLinkItems } from "@/sidepanel/components/extraction-panels/helpers";
+} from "@/sidepanel/types";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
-const CHECK_VIEW_HYDRATE_KEY = "match_check_view_hydrate";
+const DEFAULT_DEEP_DIVE_MAX_LINKS = 100;
 
 interface DeepDiveCacheState {
 	initialized: boolean;
@@ -183,6 +182,10 @@ export const useDeepDive = () => {
 		}
 		return unique;
 	}, [rawInternalLinks, removeDuplicateLinks]);
+	const limitedPreparedLinks = useMemo(
+		() => preparedLinks.slice(0, DEFAULT_DEEP_DIVE_MAX_LINKS),
+		[preparedLinks],
+	);
 
 	const loadInternalLinks = useCallback(async () => {
 		setLoadingLinks(true);
@@ -220,9 +223,9 @@ export const useDeepDive = () => {
 
 	useEffect(() => {
 		if (results.length > 0 || running) return;
-		if (preparedLinks.length === 0) return;
-		setResults(toPendingRows(preparedLinks));
-	}, [preparedLinks, results.length, running]);
+		if (limitedPreparedLinks.length === 0) return;
+		setResults(toPendingRows(limitedPreparedLinks));
+	}, [limitedPreparedLinks, results.length, running]);
 
 	useEffect(() => {
 		const listener = (
@@ -270,9 +273,10 @@ export const useDeepDive = () => {
 
 	const canPrimaryAction = useMemo(
 		() =>
-			(running || (preparedLinks.length > 0 && !loadingLinks && !!tabId)) &&
+			(running ||
+				(limitedPreparedLinks.length > 0 && !loadingLinks && !!tabId)) &&
 			!loadingLinks,
-		[running, preparedLinks.length, loadingLinks, tabId],
+		[running, limitedPreparedLinks.length, loadingLinks, tabId],
 	);
 
 	const handlePrimaryAction = useCallback(async () => {
@@ -311,12 +315,12 @@ export const useDeepDive = () => {
 			}
 		}
 
-		if (!tabId || preparedLinks.length === 0) return;
+		if (!tabId || limitedPreparedLinks.length === 0) return;
 
 		setRunning(true);
 		setPaused(false);
 		setError(null);
-		setResults(toPendingRows(preparedLinks));
+		setResults(toPendingRows(limitedPreparedLinks));
 
 		try {
 			const response = await chrome.runtime.sendMessage<
@@ -326,7 +330,7 @@ export const useDeepDive = () => {
 				type: "RUN_DEEP_DIVE",
 				payload: {
 					tabId,
-					links: preparedLinks.map((link) => ({
+					links: limitedPreparedLinks.map((link) => ({
 						href: link.normalizedHref,
 						text: link.text,
 					})),
@@ -342,7 +346,7 @@ export const useDeepDive = () => {
 			setPaused(false);
 			setError(err instanceof Error ? err.message : "Deep-dive failed.");
 		}
-	}, [paused, preparedLinks, running, tabId]);
+	}, [limitedPreparedLinks, paused, running, tabId]);
 
 	const openRowInCheck = useCallback(async (row: DeepDiveResult) => {
 		if (row.status !== "done") return;
@@ -356,43 +360,11 @@ export const useDeepDive = () => {
 			await chrome.tabs.update(activeTab.tabId, { url: row.url });
 			await waitForTabComplete(activeTab.tabId);
 
-			const response = await chrome.runtime.sendMessage<
-				RUN_ANALYSIS_MESSAGE,
-				RUN_ANALYSIS_RESPONSE
-			>({
-				type: "RUN_ANALYSIS",
-				payload: {
-					tabId: activeTab.tabId,
-					url: row.url,
-					searchTerm: row.searchTerm,
-					force: false,
-				},
+			await hydrateAndOpenCheckView({
+				tabId: activeTab.tabId,
+				url: row.url,
+				searchTerm: row.searchTerm,
 			});
-
-			if (
-				!response?.success ||
-				!response.scores ||
-				!response.metrics ||
-				!response.inputs
-			) {
-				throw new Error(response?.error || "Failed to open result in Check.");
-			}
-
-			await chrome.storage.session.set({
-				[CHECK_VIEW_HYDRATE_KEY]: {
-					url: row.url,
-					searchTerm: row.searchTerm,
-					scores: response.scores,
-					fullMetrics: response.metrics,
-					fullInputs: response.inputs,
-				},
-			});
-
-			window.dispatchEvent(
-				new CustomEvent("match:navigate-view", {
-					detail: { id: "check" },
-				}),
-			);
 		} catch (err) {
 			setError(
 				err instanceof Error
@@ -524,7 +496,8 @@ export const useDeepDive = () => {
 		removeDuplicateLinks,
 		setRemoveDuplicateLinks,
 		rawLinksCount: rawInternalLinks.length,
-		readyLinksCount: preparedLinks.length,
+		readyLinksCount: limitedPreparedLinks.length,
+		maxLinks: DEFAULT_DEEP_DIVE_MAX_LINKS,
 		completedCount,
 		totalCount: results.length,
 		progressValue,

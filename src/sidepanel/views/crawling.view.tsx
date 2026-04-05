@@ -2,10 +2,11 @@ import {
 	ArrowLeftIcon,
 	DownloadIcon,
 	FileSpreadsheetIcon,
+	PauseIcon,
 	PlayIcon,
 } from "lucide-react";
 import type React from "react";
-import { HeatmapRow } from "@/components/common/heatmap.row";
+import { MatchResultRow } from "@/components/common/match-result.row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -21,6 +22,7 @@ export const CrawlingView: React.FC = () => {
 		activeBatch,
 		selectedBatchIndex,
 		running,
+		paused,
 		error,
 		totalCount,
 		completedCount,
@@ -29,6 +31,7 @@ export const CrawlingView: React.FC = () => {
 		reBatch,
 		handleFile,
 		start,
+		openRowInCheck,
 		setSelectedBatchIndex,
 		downloadBatchScores,
 		downloadBatchExtractions,
@@ -46,11 +49,21 @@ export const CrawlingView: React.FC = () => {
 				<Button
 					size="sm"
 					onClick={start}
-					disabled={running || batches.length === 0}
+					disabled={batches.length === 0}
 					className="h-8 gap-1"
 				>
-					<PlayIcon className="size-3" />
-					<span className="text-xs">{running ? "Running..." : "Start"}</span>
+					{running ? (
+						paused ? (
+							<PlayIcon className="size-3" />
+						) : (
+							<PauseIcon className="size-3" />
+						)
+					) : (
+						<PlayIcon className="size-3" />
+					)}
+					<span className="text-xs">
+						{running ? (paused ? "Resume" : "Pause") : "Start"}
+					</span>
 				</Button>
 			</div>
 
@@ -66,7 +79,7 @@ export const CrawlingView: React.FC = () => {
 					id="crawl-csv-input"
 					type="file"
 					accept=".csv,text/csv"
-					className="text-muted text-xs"
+					className="text-muted-foreground text-xs"
 					onChange={(event) => {
 						const file = event.target.files?.[0];
 						if (!file) return;
@@ -220,31 +233,22 @@ export const CrawlingView: React.FC = () => {
 							</div>
 
 							{activeBatch.items.map((item, index) => (
-								<div
+								<MatchResultRow
 									key={`${activeBatch.index}-${item.id}-${index}`}
-									className="rounded-md border bg-card p-2"
-								>
-									<div className="flex items-center justify-between gap-2">
-										<p className="text-[10px] text-muted-foreground">
-											ID: {item.id}
-										</p>
-										<p className="text-[10px] text-muted-foreground uppercase">
-											{item.status}
-										</p>
-									</div>
-									<p className="truncate font-medium text-xs">{item.url}</p>
-									<p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-										Search: {item.searchTerm || "(empty)"}
-									</p>
-									<div className="mt-2">
-										<HeatmapRow scores={item.scores ?? []} />
-									</div>
-									{item.error && (
-										<p className="mt-2 text-[10px] text-destructive">
-											{item.error}
-										</p>
-									)}
-								</div>
+									index={index}
+									status={item.status}
+									url={item.url}
+									searchTerm={item.searchTerm}
+									scores={item.scores}
+									error={item.error}
+									metaLabel={`ID: ${item.id}`}
+									clickable={item.status === "done"}
+									onOpen={
+										item.status === "done"
+											? () => openRowInCheck(item)
+											: undefined
+									}
+								/>
 							))}
 						</>
 					)}

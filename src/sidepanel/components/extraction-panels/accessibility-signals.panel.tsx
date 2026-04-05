@@ -1,7 +1,7 @@
 import { ShieldCheckIcon } from "lucide-react";
 import type React from "react";
+import { getNumber } from "@/lib/extraction.helpers";
 import type { Extractions } from "@/lib/types/engine";
-import { getNumber } from "./helpers";
 import { ExtractionField, ExtractionSection } from "./shared";
 
 interface AccessibilitySignalsPanelProps {

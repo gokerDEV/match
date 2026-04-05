@@ -1,6 +1,6 @@
 import { ImageIcon } from "lucide-react";
 import type React from "react";
-import type { IconItem } from "./helpers";
+import type { IconItem } from "@/lib/extraction.helpers";
 import { ExtractionSection } from "./shared";
 
 interface IconsPanelProps {

@@ -3,24 +3,24 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Extractions } from "@/lib/types/engine";
-import type {
-	GET_CACHED_EXTRACTIONS_MESSAGE,
-	GET_CACHED_EXTRACTIONS_RESPONSE,
-} from "@/services/messaging";
-import { AccessibilitySignalsPanel } from "./extraction-panels/accessibility-signals.panel";
-import { DomSignalsPanel } from "./extraction-panels/dom-signals.panel";
 import {
 	getIconItems,
 	getLinkItems,
 	getString,
 	getTagItems,
-} from "./extraction-panels/helpers";
-import { IconsPanel } from "./extraction-panels/icons.panel";
-import { LinksPanel } from "./extraction-panels/links.panel";
-import { OgTagsPanel } from "./extraction-panels/og-tags.panel";
-import { TechnicalSignalsPanel } from "./extraction-panels/technical-signals.panel";
-import { TwitterTagsPanel } from "./extraction-panels/twitter-tags.panel";
+} from "@/lib/extraction.helpers";
+import type { Extractions } from "@/lib/types/engine";
+import type {
+	GET_CACHED_EXTRACTIONS_MESSAGE,
+	GET_CACHED_EXTRACTIONS_RESPONSE,
+} from "@/services/messaging";
+import { AccessibilitySignalsPanel } from "../components/extraction-panels/accessibility-signals.panel";
+import { DomSignalsPanel } from "../components/extraction-panels/dom-signals.panel";
+import { IconsPanel } from "../components/extraction-panels/icons.panel";
+import { LinksPanel } from "../components/extraction-panels/links.panel";
+import { OgTagsPanel } from "../components/extraction-panels/og-tags.panel";
+import { TechnicalSignalsPanel } from "../components/extraction-panels/technical-signals.panel";
+import { TwitterTagsPanel } from "../components/extraction-panels/twitter-tags.panel";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
 

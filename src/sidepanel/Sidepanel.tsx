@@ -16,11 +16,11 @@ import {
 	SidebarProvider,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { CheckView } from "./components/check.view";
-import { CrawlingView } from "./components/crawling.view";
-import { DeepDiveView } from "./components/deep-dive.view";
-import { ExtractionsView } from "./components/extractions.view";
-import { SettingsView } from "./components/settings.view";
+import { CheckView } from "./views/check.view";
+import { CrawlingView } from "./views/crawling.view";
+import { DeepDiveView } from "./views/deep-dive.view";
+import { ExtractionsView } from "./views/extractions.view";
+import { SettingsView } from "./views/settings.view";
 
 const NAV_ITEMS = [
 	{ id: "check", label: "Check", icon: SearchCheckIcon },

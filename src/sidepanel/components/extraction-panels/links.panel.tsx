@@ -1,6 +1,6 @@
 import { LinkIcon } from "lucide-react";
 import type React from "react";
-import type { LinkItem } from "./helpers";
+import type { LinkItem } from "@/lib/extraction.helpers";
 import { ExtractionSection } from "./shared";
 
 interface LinksPanelProps {

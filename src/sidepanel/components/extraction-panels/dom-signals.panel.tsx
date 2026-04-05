@@ -1,7 +1,7 @@
 import { DatabaseIcon } from "lucide-react";
 import type React from "react";
+import { getNumber, getString, getStringList } from "@/lib/extraction.helpers";
 import type { Extractions } from "@/lib/types/engine";
-import { getNumber, getString, getStringList } from "./helpers";
 import { ExtractionField, ExtractionSection } from "./shared";
 
 interface DomSignalsPanelProps {

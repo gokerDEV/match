@@ -1,6 +1,6 @@
 import { ImageIcon } from "lucide-react";
 import type React from "react";
-import type { TagItem } from "./helpers";
+import type { TagItem } from "@/lib/extraction.helpers";
 import { ExtractionSection } from "./shared";
 
 interface OgTagsPanelProps {

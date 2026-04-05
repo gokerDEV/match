@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { CHECK_VIEW_HYDRATE_KEY } from "@/lib/check-view.helpers";
 import { generateReport } from "@/lib/report.utils";
 import type { Inputs, Metrics } from "@/lib/types/engine";
 import { cn } from "@/lib/utils";
@@ -13,17 +14,15 @@ import type {
 	RUN_ANALYSIS_MESSAGE,
 	RUN_ANALYSIS_RESPONSE,
 } from "@/services/messaging";
-import { AccessibilityTab } from "./tabs/accessibility.tab";
-import { ContextualTab } from "./tabs/contextual.tab";
-import { HierarchyTab } from "./tabs/hierarchy.tab";
-import { MetaTab } from "./tabs/meta.tab";
-import { TechnicalTab } from "./tabs/technical.tab";
+import { AccessibilityTab } from "../components/tabs/accessibility.tab";
+import { ContextualTab } from "../components/tabs/contextual.tab";
+import { HierarchyTab } from "../components/tabs/hierarchy.tab";
+import { MetaTab } from "../components/tabs/meta.tab";
+import { TechnicalTab } from "../components/tabs/technical.tab";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const SESSION_TAB_KEY = "match_last_tab_id";
-const CHECK_VIEW_HYDRATE_KEY = "match_check_view_hydrate";
-
 interface CheckViewCacheState {
 	url: string;
 	searchTerm: string;

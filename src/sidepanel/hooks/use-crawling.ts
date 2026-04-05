@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { hydrateAndOpenCheckView } from "@/lib/check-view.helpers";
 import { metricDescriptions } from "@/lib/engine/plan";
 import type { Extractions, Inputs, Metrics } from "@/lib/types/engine";
 import type {
@@ -11,7 +12,7 @@ import type {
 	CrawlingBatch,
 	CrawlingResultItem,
 	CsvRow,
-} from "@/sidepanel/components/crawling/types";
+} from "@/sidepanel/types";
 
 const SESSION_TAB_KEY = "match_last_tab_id";
 const CRAWL_STORAGE_PREFIX = "match_crawl_batch";
@@ -24,6 +25,7 @@ interface CrawlingCacheState {
 	batches: CrawlingBatch[];
 	selectedBatchIndex: number | null;
 	running: boolean;
+	paused: boolean;
 	initialized: boolean;
 	error: string | null;
 	sessionId: string;
@@ -37,6 +39,7 @@ let crawlCache: CrawlingCacheState = {
 	batches: [],
 	selectedBatchIndex: null,
 	running: false,
+	paused: false,
 	initialized: false,
 	error: null,
 	sessionId: "",
@@ -232,8 +235,10 @@ export const useCrawling = () => {
 		() => crawlCache.selectedBatchIndex,
 	);
 	const [running, setRunning] = useState(() => crawlCache.running);
+	const [paused, setPaused] = useState(() => crawlCache.paused);
 	const [error, setError] = useState<string | null>(() => crawlCache.error);
 	const [sessionId, setSessionId] = useState(() => crawlCache.sessionId);
+	const isPausedRef = useRef(paused);
 
 	const totalCount = rows.length;
 	const completedCount = useMemo(
@@ -249,6 +254,10 @@ export const useCrawling = () => {
 		totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
 	useEffect(() => {
+		isPausedRef.current = paused;
+	}, [paused]);
+
+	useEffect(() => {
 		crawlCache = {
 			fileName,
 			rows,
@@ -257,6 +266,7 @@ export const useCrawling = () => {
 			batches,
 			selectedBatchIndex,
 			running,
+			paused,
 			initialized: true,
 			error,
 			sessionId,
@@ -269,9 +279,16 @@ export const useCrawling = () => {
 		batches,
 		selectedBatchIndex,
 		running,
+		paused,
 		error,
 		sessionId,
 	]);
+
+	const waitIfPaused = useCallback(async () => {
+		while (isPausedRef.current) {
+			await sleep(150);
+		}
+	}, []);
 
 	const handleFile = useCallback(
 		async (file: File) => {
@@ -309,9 +326,14 @@ export const useCrawling = () => {
 	);
 
 	const start = useCallback(async () => {
-		if (running || batches.length === 0) return;
+		if (batches.length === 0) return;
+		if (running) {
+			setPaused((prev) => !prev);
+			return;
+		}
 		setError(null);
 		setRunning(true);
+		setPaused(false);
 
 		try {
 			const activeTab = await fetchActiveTab();
@@ -334,6 +356,7 @@ export const useCrawling = () => {
 					itemIndex < currentBatchItems.length;
 					itemIndex++
 				) {
+					await waitIfPaused();
 					const csvItem = currentBatchItems[itemIndex];
 
 					try {
@@ -432,6 +455,7 @@ export const useCrawling = () => {
 
 				setSelectedBatchIndex(null);
 				if (batchIndex < batches.length - 1) {
+					await waitIfPaused();
 					await sleep(Math.max(0, sleepMs));
 				}
 			}
@@ -439,8 +463,34 @@ export const useCrawling = () => {
 			setError(err instanceof Error ? err.message : "Crawling failed.");
 		} finally {
 			setRunning(false);
+			setPaused(false);
 		}
-	}, [batches, running, sessionId, sleepMs]);
+	}, [batches, running, sessionId, sleepMs, waitIfPaused]);
+
+	const openRowInCheck = useCallback(async (item: CrawlingResultItem) => {
+		if (item.status !== "done") return;
+		try {
+			setError(null);
+			const activeTab = await fetchActiveTab();
+			if (!activeTab) {
+				throw new Error("No active tab found.");
+			}
+
+			await chrome.tabs.update(activeTab.tabId, { url: item.url });
+			await waitForTabComplete(activeTab.tabId);
+			await hydrateAndOpenCheckView({
+				tabId: activeTab.tabId,
+				url: item.url,
+				searchTerm: item.searchTerm,
+			});
+		} catch (err) {
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to open item in Check view.",
+			);
+		}
+	}, []);
 
 	const downloadBatchScores = useCallback(
 		async (batchIndex: number) => {
@@ -482,6 +532,7 @@ export const useCrawling = () => {
 		activeBatch,
 		selectedBatchIndex,
 		running,
+		paused,
 		error,
 		totalCount,
 		completedCount,
@@ -490,6 +541,7 @@ export const useCrawling = () => {
 		reBatch,
 		handleFile,
 		start,
+		openRowInCheck,
 		setSelectedBatchIndex,
 		downloadBatchScores,
 		downloadBatchExtractions,

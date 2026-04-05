@@ -6,11 +6,11 @@ import {
 	RefreshCwIcon,
 } from "lucide-react";
 import type React from "react";
+import { MatchResultRow } from "@/components/common/match-result.row";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { DeepDiveRow } from "@/sidepanel/components/deep-dive/deep-dive-row";
 import { useDeepDive } from "@/sidepanel/hooks/use-deep-dive";
 
 export const DeepDiveView: React.FC = () => {
@@ -25,6 +25,7 @@ export const DeepDiveView: React.FC = () => {
 		setRemoveDuplicateLinks,
 		rawLinksCount,
 		readyLinksCount,
+		maxLinks,
 		completedCount,
 		totalCount,
 		progressValue,
@@ -93,6 +94,7 @@ export const DeepDiveView: React.FC = () => {
 						<p className="font-medium">
 							{rawLinksCount}/{readyLinksCount}
 						</p>
+						<p className="text-[10px] text-muted-foreground">Max: {maxLinks}</p>
 					</div>
 					<div className="flex items-center gap-2">
 						<span className="text-[10px] text-muted-foreground">
@@ -124,18 +126,25 @@ export const DeepDiveView: React.FC = () => {
 			)}
 
 			<ScrollArea className="overflow-y-auto">
-				<div className="flex min-w-0 flex-col gap-2 p-2.5">
+				<div className="flex min-w-0 max-w-xs flex-col gap-2 p-2.5">
 					{results.length === 0 && (
 						<p className="text-muted-foreground text-xs">
 							No internal links ready.
 						</p>
 					)}
 					{results.map((row, index) => (
-						<DeepDiveRow
+						<MatchResultRow
 							key={`${row.url}-${index}`}
 							index={index}
-							row={row}
-							onOpen={openRowInCheck}
+							status={row.status}
+							url={row.url}
+							searchTerm={row.searchTerm}
+							scores={row.scores}
+							error={row.error}
+							clickable={row.status === "done"}
+							onOpen={
+								row.status === "done" ? () => openRowInCheck(row) : undefined
+							}
 						/>
 					))}
 				</div>
