@@ -1,5 +1,8 @@
 export const extractDomSignals = () => {
 	const currentUrl = new URL(window.location.href);
+	const normalizeText = (value: string | null | undefined): string =>
+		(value || "").replace(/\s+/g, " ").trim();
+
 	const toAbsoluteUrl = (value: string | null): string | null => {
 		if (!value) return null;
 		try {
@@ -7,6 +10,29 @@ export const extractDomSignals = () => {
 		} catch {
 			return null;
 		}
+	};
+
+	const extractAnchorText = (anchor: HTMLAnchorElement): string => {
+		const fromText = normalizeText(anchor.textContent);
+		if (fromText.length > 0) return fromText;
+
+		const fromAriaLabel = normalizeText(anchor.getAttribute("aria-label"));
+		if (fromAriaLabel.length > 0) return fromAriaLabel;
+
+		const fromTitle = normalizeText(anchor.getAttribute("title"));
+		if (fromTitle.length > 0) return fromTitle;
+
+		const imageAlts = Array.from(anchor.querySelectorAll("img[alt]"))
+			.map((image) => normalizeText(image.getAttribute("alt")))
+			.filter((alt) => alt.length > 0);
+		if (imageAlts.length > 0) return imageAlts.join(" ");
+
+		const fromSvgTitle = normalizeText(
+			anchor.querySelector("svg title")?.textContent,
+		);
+		if (fromSvgTitle.length > 0) return fromSvgTitle;
+
+		return "";
 	};
 
 	const title = document.title || null;
@@ -89,9 +115,11 @@ export const extractDomSignals = () => {
 		}))
 		.filter((link) => link.href.length > 0);
 
-	const allAnchors = Array.from(document.querySelectorAll("a[href]"));
-	const seenInternal = new Set<string>();
-	const seenExternal = new Set<string>();
+	const allAnchors = Array.from(
+		document.querySelectorAll<HTMLAnchorElement>("a[href]"),
+	);
+	const seenInternal = new Map<string, number>();
+	const seenExternal = new Map<string, number>();
 	const internalLinks: Array<{ href: string; text: string }> = [];
 	const externalLinks: Array<{ href: string; text: string }> = [];
 
@@ -107,19 +135,31 @@ export const extractDomSignals = () => {
 			continue;
 		}
 
-		const text = (anchor.textContent || "").replace(/\s+/g, " ").trim();
+		const text = extractAnchorText(anchor);
 		const payload = { href: parsedUrl.href, text };
 		const isInternal = parsedUrl.origin === currentUrl.origin;
 
 		if (isInternal) {
-			if (seenInternal.has(parsedUrl.href)) continue;
-			seenInternal.add(parsedUrl.href);
+			const existingIndex = seenInternal.get(parsedUrl.href);
+			if (existingIndex !== undefined) {
+				if (!internalLinks[existingIndex].text && text) {
+					internalLinks[existingIndex].text = text;
+				}
+				continue;
+			}
+			seenInternal.set(parsedUrl.href, internalLinks.length);
 			internalLinks.push(payload);
 			continue;
 		}
 
-		if (seenExternal.has(parsedUrl.href)) continue;
-		seenExternal.add(parsedUrl.href);
+		const existingIndex = seenExternal.get(parsedUrl.href);
+		if (existingIndex !== undefined) {
+			if (!externalLinks[existingIndex].text && text) {
+				externalLinks[existingIndex].text = text;
+			}
+			continue;
+		}
+		seenExternal.set(parsedUrl.href, externalLinks.length);
 		externalLinks.push(payload);
 	}
 

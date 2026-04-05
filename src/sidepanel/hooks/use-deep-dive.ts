@@ -101,6 +101,24 @@ const normalizeLink = (href: string): string | null => {
 	}
 };
 
+const fallbackSearchTerm = (href: string): string => {
+	try {
+		const parsed = new URL(href);
+		const rawSegment = parsed.pathname.split("/").filter(Boolean).pop();
+		if (!rawSegment) return "";
+		const decoded = decodeURIComponent(rawSegment);
+		return decoded.replace(/[-_]+/g, " ").trim();
+	} catch {
+		return "";
+	}
+};
+
+const resolveSearchTerm = (text: string, href: string): string => {
+	const normalizedText = text.replace(/\s+/g, " ").trim();
+	if (normalizedText.length > 0) return normalizedText;
+	return fallbackSearchTerm(href);
+};
+
 const toPendingRows = (links: PreparedLink[]): DeepDiveResult[] =>
 	links.map((link) => ({
 		url: link.normalizedHref,
@@ -165,7 +183,7 @@ export const useDeepDive = () => {
 				const normalizedHref = normalizeLink(link.href);
 				if (!normalizedHref) return null;
 				return {
-					text: link.text,
+					text: resolveSearchTerm(link.text, normalizedHref),
 					normalizedHref,
 				};
 			})
