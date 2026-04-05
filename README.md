@@ -1,7 +1,7 @@
 # MATCH
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue) ![License](https://img.shields.io/badge/license-MIT-green) 
-<!-- ![Chrome Web Store](https://img.shields.io/chrome-web-store/v/fgggldjlbpajaffefpkkhkfdiihinebf) -->
+![Version](https://img.shields.io/badge/version-1.0.2-blue) ![License](https://img.shields.io/badge/license-MIT-green) 
+![Chrome Web Store](https://img.shields.io/chrome-web-store/v/npbdhbdmcknpnkaiodgbefnhjgcnkgem)
 
 <img src="public/banner.svg" width="400" alt="MATCH" style="padding-bottom: 10px;" />
 

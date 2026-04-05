@@ -184,6 +184,13 @@ The sidepanel is the power-user analysis surface inside the browser.
 - **Deep Dive**: Runs MATCH sequentially over internal links of active page.
 - **Crawling**: Runs MATCH in batches from CSV input.
 
+**Global Sidepanel UX Rules**
+- Navigation between sidepanel views MUST NOT reset finished results automatically.
+- Any running operation must expose explicit user control (`start`, `pause`, `resume`).
+- Long-running lists must be scrollable and must not overflow sidepanel width.
+- Progress must use deterministic counts: `completed / total`.
+- Row updates must render incrementally as each step finishes.
+
 **Deep Dive Requirements**
 - Internal links are prepared from cached extraction data.
 - Links must be normalized and de-duplicated when "remove duplicate links" is enabled (default: true).
@@ -194,6 +201,31 @@ The sidepanel is the power-user analysis surface inside the browser.
 - Completed rows must be openable and hydrate Check view for the clicked row.
 - Deep-dive state must persist across sidepanel view navigation until a new start action.
 
+**Deep Dive Execution Details**
+- Source links are read from extracted `internalLinks`.
+- Pre-run preparation order:
+  1. Normalize URL (remove hash, normalize trailing slash).
+  2. Optionally de-duplicate by normalized URL (`remove duplicate links`).
+  3. Apply max-link cap (`100` by default).
+- Search-term resolution per link:
+  1. use extracted link text
+  2. fallback to URL pathname segment
+  3. fallback to `""` (empty string)
+- Active-tab navigation model:
+  - Reuse current active tab (no hidden tab strategy).
+  - Wait for navigation completion before MATCH run.
+- Row statuses:
+  - `pending` -> `done` or `error`
+  - status changes must be reflected immediately in list UI.
+
+**Deep Dive Controls**
+- `Refresh` reloads internal links from extraction cache for current active URL.
+- `Start` initializes a new run from prepared links.
+- While running, main action toggles to `Pause` and `Resume`.
+- Export actions:
+  - `Results JSON`
+  - `Extractions JSON`
+
 **Crawling Requirements**
 - Input CSV format: `id, search term, url`.
 - Batch size and sleep duration between batches are configurable.
@@ -203,6 +235,51 @@ The sidepanel is the power-user analysis surface inside the browser.
 - Completed batch artifacts (scores and extractions) must be persisted and downloadable per batch.
 - Completed row items must be openable and hydrate Check view for the clicked row.
 - Crawling state must persist across sidepanel view navigation until a new session/file load.
+
+**Crawling Execution Details**
+- CSV parser requirements:
+  - Header must include `id, search term, url`.
+  - Invalid/empty rows are skipped deterministically.
+- Batch behavior:
+  - Batch list is derived from configured `batchSize`.
+  - Processing order is strictly sequential: batch 1 -> batch 2 -> ...
+  - Sleep is applied between batches using configured `sleepMs`.
+- Pause behavior:
+  - Pause must block both per-row progression and inter-batch sleep progression.
+  - Resume continues from exact paused position.
+- Row lifecycle:
+  - Each row keeps `id`, input URL, visited URL, search term, status, scores, metrics, inputs, extractions, error.
+  - `status` transitions: `pending` -> `done` or `error`.
+- Batch persistence:
+  - After each batch completes, scores and extraction payloads must be stored in local storage and remain downloadable.
+
+**Extraction View Requirements**
+- Show extraction data for active tab URL from cache.
+- Include dedicated signal sections:
+  - DOM signals
+  - Open Graph tags (+ `og:image` thumbnail)
+  - Twitter tags (+ `twitter:image` thumbnail)
+  - Favicon/icon previews
+  - Accessibility and technical signals
+  - Links grouped as internal/external
+- Link rendering:
+  - Display full internal/external counts.
+  - Limit rendered list entries to first `100` per group.
+- Export action:
+  - `Download JSON` for current extraction object.
+
+**Check View Hydration Contract**
+- Deep Dive and Crawling "open row" actions must:
+  1. Navigate active tab to target URL
+  2. Run MATCH for that row context (URL + search term)
+  3. Hydrate Check view state
+  4. Navigate sidepanel to Check view
+- Hydration payload must include at least:
+  - `url`
+  - `searchTerm`
+  - `scores`
+  - `fullMetrics`
+  - `fullInputs`
 
 ---
 
