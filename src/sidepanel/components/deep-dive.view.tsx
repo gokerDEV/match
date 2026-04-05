@@ -1,4 +1,10 @@
-import { DownloadIcon, PauseIcon, PlayIcon, RadarIcon } from "lucide-react";
+import {
+	DownloadIcon,
+	PauseIcon,
+	PlayIcon,
+	RadarIcon,
+	RefreshCwIcon,
+} from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +18,7 @@ export const DeepDiveView: React.FC = () => {
 		tabUrl,
 		results,
 		error,
+		loadingLinks,
 		running,
 		paused,
 		removeDuplicateLinks,
@@ -28,6 +35,7 @@ export const DeepDiveView: React.FC = () => {
 		exportingExtractions,
 		handleDownloadResults,
 		handleDownloadExtractions,
+		refresh,
 	} = useDeepDive();
 
 	return (
@@ -43,6 +51,17 @@ export const DeepDiveView: React.FC = () => {
 					)}
 				</div>
 				<div className="flex items-center gap-2">
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={refresh}
+						disabled={running || loadingLinks}
+						className="h-8 gap-1"
+					>
+						<RefreshCwIcon
+							className={`size-3 ${loadingLinks ? "animate-spin" : ""}`}
+						/>
+					</Button>
 					<Button
 						size="sm"
 						onClick={handlePrimaryAction}
@@ -121,7 +140,7 @@ export const DeepDiveView: React.FC = () => {
 					))}
 				</div>
 			</ScrollArea>
-			<div className='p-2.5  grid grid-cols-2 gap-2'>
+			<div className="grid grid-cols-2 gap-2 p-2.5">
 				<Button
 					size="sm"
 					variant="outline"

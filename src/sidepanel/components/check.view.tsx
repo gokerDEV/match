@@ -1,4 +1,4 @@
-import {DownloadIcon, LayoutDashboardIcon, XIcon} from "lucide-react";
+import { DownloadIcon, LayoutDashboardIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { HeatmapRow, MATCH_COLUMNS } from "@/components/common/heatmap.row";
@@ -380,10 +380,9 @@ export const CheckView: React.FC = () => {
 					<ScrollArea className="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5">
 						<ActiveTabComponent metrics={fullMetrics} />
 					</ScrollArea>
-
 				</div>
 			)}
-			<div className='p-4  grid grid-cols-2 gap-2'>
+			<div className="grid grid-cols-2 gap-2 p-4">
 				<Button
 					size="sm"
 					onClick={() => {

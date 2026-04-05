@@ -170,7 +170,6 @@ export const ExtractionsView: React.FC = () => {
 						<RefreshCwIcon
 							className={`size-3 ${loading ? "animate-spin" : ""}`}
 						/>
-						<span className="text-xs">Refresh</span>
 					</Button>
 				</div>
 			</div>
@@ -233,7 +232,7 @@ export const ExtractionsView: React.FC = () => {
 				</ScrollArea>
 			)}
 
-			<div className='p-2.5  grid grid-cols-1 gap-2'>
+			<div className="grid grid-cols-1 gap-2 p-2.5">
 				<Button
 					size="sm"
 					variant="outline"

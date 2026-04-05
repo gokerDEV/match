@@ -25,13 +25,17 @@ export const DeepDiveRow: React.FC<DeepDiveRowProps> = ({
 	return (
 		<div className="rounded border bg-card p-2">
 			<div className="flex items-center justify-between gap-2">
-				<p className="text-[10px] text-muted-foreground">#{index + 1}</p>
+				<p className="flex gap-2 text-[10px] text-muted-foreground">
+					#{index + 1} -<span className="uppercase">{row.status}</span>
+				</p>
 				<div className="flex items-center gap-2">
-					<p className="text-[10px] text-muted-foreground uppercase">
-						{row.status}
-					</p>
 					{isClickable && (
-						<Button size="xs" variant="outline" onClick={onTriggerOpen}>
+						<Button
+							className="px-6"
+							size="xs"
+							variant="outline"
+							onClick={onTriggerOpen}
+						>
 							Open
 						</Button>
 					)}

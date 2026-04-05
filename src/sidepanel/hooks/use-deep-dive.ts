@@ -518,6 +518,7 @@ export const useDeepDive = () => {
 		tabUrl,
 		results,
 		error,
+		loadingLinks,
 		running,
 		paused,
 		removeDuplicateLinks,
@@ -534,5 +535,6 @@ export const useDeepDive = () => {
 		exportingExtractions,
 		handleDownloadResults,
 		handleDownloadExtractions,
+		refresh: loadInternalLinks,
 	};
 };
